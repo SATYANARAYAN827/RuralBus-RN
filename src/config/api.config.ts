@@ -53,7 +53,11 @@ export const API_CONFIG = {
     VERIFY_PAYMENT: '/api/v1/payments/verify',
     TICKET_DETAIL: (id: string) => `/api/v1/tickets/${id}`,
 
-    // Driver & Conductor Duty
+    // Driver & Conductor Duty (Fastify: apps/api/src/routes/duty.ts)
+    DRIVER_DUTY: '/api/v1/driver/duty',
+    DRIVER_START_TRIP: (tripId: string) => `/api/v1/driver/duty/${tripId}/start`,
+    DRIVER_END_TRIP: (tripId: string) => `/api/v1/driver/duty/${tripId}/end`,
+    DRIVER_HISTORY: '/api/v1/driver/history',
     START_TRIP: '/api/v1/duty/trips/start',
     COMPLETE_TRIP: '/api/v1/duty/trips/complete',
     ASSIGNED_TRIPS: '/api/v1/duty/trips/assigned',

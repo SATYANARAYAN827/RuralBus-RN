@@ -13,6 +13,7 @@ import { ROLE_NAVIGATION_CONFIGS } from './roleNavigationConfig';
 import { ResponsiveShell } from '../components/layout/ResponsiveShell';
 import { LoginScreen, RegisterScreen, ForceChangePasswordModal } from '../screens/auth';
 import { PassengerApp } from '../screens/passenger';
+import { DriverApp } from '../screens/driver';
 import {
   Button,
   Card,
@@ -120,6 +121,8 @@ export const RoleRouter: React.FC = () => {
       >
         {activeRole === 'PASSENGER' ? (
           <PassengerApp />
+        ) : activeRole === 'DRIVER' ? (
+          <DriverApp />
         ) : (
           <View style={styles.foundationContainer}>
             {/* Role Quick Selector Banner */}
