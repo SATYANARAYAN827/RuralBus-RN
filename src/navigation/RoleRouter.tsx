@@ -16,6 +16,7 @@ import { PassengerApp } from '../screens/passenger';
 import { DriverApp } from '../screens/driver';
 import { ConductorApp } from '../screens/conductor';
 import { OperatorAdminApp } from '../screens/operator';
+import { SuperAdminApp } from '../screens/superadmin';
 import {
   Button,
   Card,
@@ -129,6 +130,8 @@ export const RoleRouter: React.FC = () => {
           <ConductorApp />
         ) : activeRole === 'OPERATOR_ADMIN' ? (
           <OperatorAdminApp />
+        ) : activeRole === 'PLATFORM_ADMIN' ? (
+          <SuperAdminApp />
         ) : (
           <View style={styles.foundationContainer}>
             {/* Role Quick Selector Banner */}

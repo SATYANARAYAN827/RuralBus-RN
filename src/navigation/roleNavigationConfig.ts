@@ -1,4 +1,4 @@
-﻿import { RoleNavigationConfig, UserRole } from '../types';
+import { RoleNavigationConfig, UserRole } from '../types';
 
 export const ROLE_NAVIGATION_CONFIGS: Record<UserRole, RoleNavigationConfig> = {
   PASSENGER: {
@@ -78,21 +78,17 @@ export const ROLE_NAVIGATION_CONFIGS: Record<UserRole, RoleNavigationConfig> = {
   PLATFORM_ADMIN: {
     role: 'PLATFORM_ADMIN',
     portalTitle: 'Super Admin Console',
-    portalSubtitle: 'Statewide Multi-Tenant Fleet & Oversight',
+    portalSubtitle: 'Statewide Multi-Tenant Operator Governance',
     icon: '⚡',
     roleBadge: 'SUPER ADMIN',
     roleBadgeColor: '#a855f7',
     roleBadgeBg: 'rgba(168, 85, 247, 0.15)',
     items: [
       { id: 'HOME', icon: '📊', label: 'Dashboard' },
-      { id: 'OWNERS', icon: '🏢', label: 'Owners', badge: '9' },
-      { id: 'BUSES', icon: '🚌', label: 'Buses', badge: '7' },
-      { id: 'STAFF', icon: '👥', label: 'Staff', badge: '8' },
-      { id: 'ROUTES', icon: '🛣️', label: 'Routes', badge: '8' },
-      { id: 'TRIPS', icon: '⏱️', label: 'Trips' },
-      { id: 'REQUESTS', icon: '📥', label: 'Requests', badge: '0' },
+      { id: 'OWNERS', icon: '🏢', label: 'Operators' },
+      { id: 'STAFF', icon: '👥', label: 'Platform Staff' },
       { id: 'PROFILE', icon: '👤', label: 'Profile' },
     ],
-    bottomTabIds: ['HOME', 'OWNERS', 'BUSES', 'PROFILE'],
+    bottomTabIds: ['HOME', 'OWNERS', 'STAFF', 'PROFILE'],
   },
 };

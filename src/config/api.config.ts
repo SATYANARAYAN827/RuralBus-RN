@@ -9,6 +9,14 @@
  * DO NOT copy, rewrite, duplicate, or modify the backend.
  */
 
+const getEnvVar = (key: string): string | undefined => {
+  try {
+    return typeof process !== 'undefined' && process.env ? process.env[key] : undefined;
+  } catch {
+    return undefined;
+  }
+};
+
 export const API_CONFIG = {
   /**
    * HTTP Base URL for Fastify REST endpoints.
@@ -16,12 +24,12 @@ export const API_CONFIG = {
    * On Web / Localhost use 'http://localhost:4000'
    * On Physical Device use LAN IP (e.g. 'http://192.168.1.x:4000')
    */
-  BASE_URL: process.env.EXPO_PUBLIC_API_URL || process.env.REACT_APP_API_URL || 'http://localhost:4000',
+  BASE_URL: getEnvVar('EXPO_PUBLIC_API_URL') || getEnvVar('REACT_APP_API_URL') || 'http://localhost:4000',
 
   /**
    * WebSocket URL for live GPS telemetry and real-time tracking room subscriptions.
    */
-  WS_URL: process.env.EXPO_PUBLIC_WS_URL || process.env.REACT_APP_WS_URL || 'ws://localhost:4000/ws/tracking',
+  WS_URL: getEnvVar('EXPO_PUBLIC_WS_URL') || getEnvVar('REACT_APP_WS_URL') || 'ws://localhost:4000/ws/tracking',
 
   /** Request timeout in milliseconds */
   TIMEOUT_MS: 15000,
@@ -107,10 +115,13 @@ export const API_CONFIG = {
     SCHEDULES: '/api/v1/operator/schedules',
     REVENUE: '/api/v1/operator/revenue',
 
-    // Super Admin Management (Zero GPS/tracking)
-    TENANTS: '/api/v1/admin/tenants',
-    ALL_BUSES: '/api/v1/admin/buses',
-    ALL_STAFF: '/api/v1/admin/staff',
-    AUDIT_LOGS: '/api/v1/admin/audit-logs',
+    // Super Admin / Platform Admin Management (Zero GPS/tracking)
+    // Backend: apps/api/src/routes/tenant.ts (PLATFORM_ADMIN gated)
+    SA_LIST_OPERATORS: '/api/v1/tenant/operators',
+    SA_OPERATOR_DETAIL: (tenantId: string) => `/api/v1/tenant/operators/${tenantId}`,
+    SA_OPERATOR_BUSES: (tenantId: string) => `/api/v1/tenant/operators/${tenantId}/buses`,
+    // Staff management for Super Admin uses the same operator staff endpoints
+    // with optional tenantId query (PLATFORM_ADMIN reads all; body for write)
+    // See: API_CONFIG.ENDPOINTS.OPERATOR_STAFF, OPERATOR_STAFF_DETAIL, OPERATOR_STAFF_STATUS
   },
 } as const;
