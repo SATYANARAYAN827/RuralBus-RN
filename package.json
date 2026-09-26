@@ -1,0 +1,30 @@
+{
+  "name": "ruralbus-rn",
+  "version": "0.1.0",
+  "private": true,
+  "description": "RuralBus Frontend - Standalone React Native + React Native Web UI Migration Workspace",
+  "main": "index.js",
+  "scripts": {
+    "start": "react-native start",
+    "android": "react-native run-android",
+    "ios": "react-native run-ios",
+    "web": "react-native start",
+    "typecheck": "tsc --noEmit",
+    "test": "npx tsx --test tests/**/*.test.ts"
+  },
+  "dependencies": {
+    "@react-navigation/native": "^7.0.14",
+    "expo-secure-store": "^57.0.4",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-native": "^0.76.7",
+    "react-native-web": "^0.19.13",
+    "zustand": "^5.0.3"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.2",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "typescript": "^5.7.3"
+  }
+}
