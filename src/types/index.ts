@@ -42,3 +42,5 @@ export * from './navigation.types';
 export * from './passenger.types';
 export * from './driver.types';
 export * from './conductor.types';
+export * from './operator.types';
+export type OperatorTab = OwnerTab;
