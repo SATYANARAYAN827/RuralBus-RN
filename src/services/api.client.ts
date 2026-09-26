@@ -65,6 +65,14 @@ class ApiClient {
     });
   }
 
+  put<T>(endpoint: string, body?: unknown, headers?: Record<string, string>) {
+    return this.request<T>(endpoint, {
+      method: 'PUT',
+      body: body ? JSON.stringify(body) : undefined,
+      headers,
+    });
+  }
+
   patch<T>(endpoint: string, body?: unknown, headers?: Record<string, string>) {
     return this.request<T>(endpoint, {
       method: 'PATCH',

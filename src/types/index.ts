@@ -41,3 +41,4 @@ export type SuperAdminTab = 'HOME' | 'OWNERS' | 'BUSES' | 'STAFF' | 'ROUTES' | '
 export * from './navigation.types';
 export * from './passenger.types';
 export * from './driver.types';
+export * from './conductor.types';

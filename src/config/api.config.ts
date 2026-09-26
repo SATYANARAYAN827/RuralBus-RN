@@ -64,6 +64,18 @@ export const API_CONFIG = {
     MANIFEST: (tripId: string) => `/api/v1/tickets/manifest/offline/${tripId}`,
     OFFLINE_CASH_SYNC: '/api/v1/conductor/offline-tickets/sync',
 
+    // Conductor Endpoints (Fastify: apps/api/src/routes/duty.ts, ticket.ts, offline-cash-ticket.ts)
+    CONDUCTOR_DUTY: '/api/v1/conductor/duty',
+    CONDUCTOR_MANIFEST: (tripId: string) => `/api/v1/conductor/manifest/${tripId}`,
+    CONDUCTOR_BOARD_PASSENGER: (tripId: string, ticketId: string) =>
+      `/api/v1/conductor/manifest/${tripId}/board/${ticketId}`,
+    CONDUCTOR_STATS: '/api/v1/conductor/stats',
+    VALIDATE_QR_TICKET: '/api/v1/tickets/validate-qr',
+    OFFLINE_MANIFEST: (tripId: string) => `/api/v1/tickets/manifest/offline/${tripId}`,
+    CONDUCTOR_CASH_TICKET: '/api/v1/conductor/cash-ticket',
+    CONDUCTOR_OFFLINE_CASH_SYNC: '/api/v1/conductor/offline-tickets/sync',
+    CONDUCTOR_CASH_SETTLEMENT: (tripId: string) => `/api/v1/conductor/cash-settlement/${tripId}`,
+
     // Live Telemetry (Fastify: apps/api/src/routes/telemetry.ts)
     GPS_PING: '/api/v1/tracking/ping',
     TRIP_STATE: (tripId: string) => `/api/v1/tracking/trip/${tripId}/state`,

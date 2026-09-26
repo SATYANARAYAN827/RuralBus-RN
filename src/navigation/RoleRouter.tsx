@@ -14,6 +14,7 @@ import { ResponsiveShell } from '../components/layout/ResponsiveShell';
 import { LoginScreen, RegisterScreen, ForceChangePasswordModal } from '../screens/auth';
 import { PassengerApp } from '../screens/passenger';
 import { DriverApp } from '../screens/driver';
+import { ConductorApp } from '../screens/conductor';
 import {
   Button,
   Card,
@@ -123,6 +124,8 @@ export const RoleRouter: React.FC = () => {
           <PassengerApp />
         ) : activeRole === 'DRIVER' ? (
           <DriverApp />
+        ) : activeRole === 'CONDUCTOR' ? (
+          <ConductorApp />
         ) : (
           <View style={styles.foundationContainer}>
             {/* Role Quick Selector Banner */}
