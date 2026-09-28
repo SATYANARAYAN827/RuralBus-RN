@@ -88,6 +88,7 @@ interface OperatorState {
   fetchStaff: () => Promise<void>;
   createStaff: (input: CreateStaffInput) => Promise<boolean>;
   updateStaff: (staffId: string, input: UpdateStaffInput) => Promise<boolean>;
+  assignStaffToBus: (staffId: string, busId: string | null) => Promise<boolean>;
   updateStaffStatus: (staffId: string, isActive: boolean) => Promise<boolean>;
   resetStaffPassword: (staffId: string, newPassword: string) => Promise<boolean>;
   deleteStaff: (staffId: string) => Promise<boolean>;
@@ -244,7 +245,7 @@ export const useOperatorStore = create<OperatorState>((set, get) => ({
     set({ isLoadingBuses: true, busError: null });
     try {
       await operatorService.updateBus(busId, input);
-      await get().fetchBuses();
+      await Promise.all([get().fetchBuses(), get().fetchStaff()]);
       return true;
     } catch (err: any) {
       set({ busError: err.message || 'Failed to update bus', isLoadingBuses: false });
@@ -336,18 +337,32 @@ export const useOperatorStore = create<OperatorState>((set, get) => ({
   updateStaff: async (staffId, input) => {
     set({ isLoadingStaff: true, staffError: null });
     try {
-      await operatorService.updateStaff(staffId, input);
-      await get().fetchStaff();
+      const realId = get().staff.find((s) => s.id === staffId || s.userId === staffId)?.id || staffId;
+      await operatorService.updateStaff(realId, input);
+      await Promise.all([get().fetchStaff(), get().fetchBuses()]);
       return true;
     } catch (err: any) {
       set({ staffError: err.message || 'Failed to update staff member', isLoadingStaff: false });
       return false;
     }
   },
+  assignStaffToBus: async (staffId, busId) => {
+    set({ isLoadingStaff: true, staffError: null });
+    try {
+      const realId = get().staff.find((s) => s.id === staffId || s.userId === staffId)?.id || staffId;
+      await operatorService.updateStaff(realId, { busId });
+      await Promise.all([get().fetchStaff(), get().fetchBuses()]);
+      return true;
+    } catch (err: any) {
+      set({ staffError: err.message || 'Failed to assign staff to vehicle', isLoadingStaff: false });
+      return false;
+    }
+  },
   updateStaffStatus: async (staffId, isActive) => {
     set({ isLoadingStaff: true, staffError: null });
     try {
-      await operatorService.updateStaffStatus(staffId, isActive);
+      const realId = get().staff.find((s) => s.id === staffId || s.userId === staffId)?.id || staffId;
+      await operatorService.updateStaffStatus(realId, isActive);
       await get().fetchStaff();
       return true;
     } catch (err: any) {
@@ -358,7 +373,8 @@ export const useOperatorStore = create<OperatorState>((set, get) => ({
   resetStaffPassword: async (staffId, newPassword) => {
     set({ isLoadingStaff: true, staffError: null });
     try {
-      await operatorService.resetStaffPassword(staffId, newPassword);
+      const realId = get().staff.find((s) => s.id === staffId || s.userId === staffId)?.id || staffId;
+      await operatorService.resetStaffPassword(realId, newPassword);
       set({ isLoadingStaff: false });
       return true;
     } catch (err: any) {
@@ -369,8 +385,9 @@ export const useOperatorStore = create<OperatorState>((set, get) => ({
   deleteStaff: async (staffId) => {
     set({ isLoadingStaff: true, staffError: null });
     try {
-      await operatorService.deleteStaff(staffId);
-      await get().fetchStaff();
+      const realId = get().staff.find((s) => s.id === staffId || s.userId === staffId)?.id || staffId;
+      await operatorService.deleteStaff(realId);
+      await Promise.all([get().fetchStaff(), get().fetchBuses()]);
       return true;
     } catch (err: any) {
       set({ staffError: err.message || 'Failed to delete staff member', isLoadingStaff: false });

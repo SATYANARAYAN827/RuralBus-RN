@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { TouchableOpacity, Text, StyleSheet, View } from 'react-native';
 import { useTheme } from '../../theme';
 
@@ -16,11 +16,14 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({ compact = false }) => 
       style={[
         styles.container,
         {
-          backgroundColor: isLight ? 'rgba(241, 245, 249, 0.9)' : 'rgba(15, 23, 42, 0.8)',
-          borderColor: isLight ? '#cbd5e1' : 'rgba(255, 255, 255, 0.15)',
+          backgroundColor: isLight ? '#ffffff' : 'rgba(15, 23, 42, 0.85)',
+          borderColor: isLight ? '#cbd5e1' : 'rgba(255, 255, 255, 0.18)',
+          borderWidth: 1.5,
           borderRadius: borderRadius.pill,
-          paddingVertical: compact ? 6 : 6,
-          paddingHorizontal: compact ? 8 : 12,
+          paddingVertical: compact ? 6 : 7,
+          paddingHorizontal: compact ? 10 : 16,
+          // @ts-ignore
+          boxShadow: isLight ? '0 2px 8px rgba(0, 0, 0, 0.08)' : '0 4px 14px rgba(0, 0, 0, 0.4)',
         },
       ]}
       accessibilityLabel="Toggle dark and light theme mode"

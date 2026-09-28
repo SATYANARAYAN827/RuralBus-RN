@@ -1,11 +1,10 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
   Modal,
-  TouchableWithoutFeedback,
 } from 'react-native';
 import { useTheme } from '../../theme';
 import { useAuthStore } from '../../stores/auth.store';
@@ -37,12 +36,14 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({ compact = fa
         style={[
           styles.pillButton,
           {
-            backgroundColor: isLight ? 'rgba(255, 255, 255, 0.95)' : 'rgba(15, 23, 42, 0.85)',
-            borderColor: isLight ? '#cbd5e1' : 'rgba(255, 255, 255, 0.15)',
+            backgroundColor: isLight ? '#ffffff' : 'rgba(15, 23, 42, 0.85)',
+            borderColor: isLight ? '#cbd5e1' : 'rgba(255, 255, 255, 0.18)',
+            borderWidth: 1.5,
             borderRadius: borderRadius.pill,
             paddingVertical: compact ? 6 : 7,
-            paddingHorizontal: compact ? 10 : 14,
-            ...(isLight ? shadows.subtle : shadows.card),
+            paddingHorizontal: compact ? 10 : 16,
+            // @ts-ignore
+            boxShadow: isLight ? '0 2px 8px rgba(0, 0, 0, 0.08)' : '0 4px 14px rgba(0, 0, 0, 0.4)',
           },
         ]}
         accessibilityLabel="Change app language"
@@ -66,93 +67,94 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({ compact = fa
         animationType="fade"
         onRequestClose={() => setIsOpen(false)}
       >
-        <TouchableWithoutFeedback onPress={() => setIsOpen(false)}>
-          <View style={styles.modalBackdrop}>
-            <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
-              <View
-                style={[
-                  styles.dropdownMenu,
-                  {
-                    backgroundColor: isLight ? '#ffffff' : '#1e293b',
-                    borderColor: isLight ? '#cbd5e1' : '#334155',
-                    borderRadius: 16,
-                    ...(isLight ? shadows.elevated : shadows.modal),
-                  },
-                ]}
-              >
-                <Text
+        <View style={styles.modalBackdrop}>
+          <TouchableOpacity
+            style={StyleSheet.absoluteFillObject}
+            activeOpacity={1}
+            onPress={() => setIsOpen(false)}
+          />
+          <View
+            style={[
+              styles.dropdownMenu,
+              {
+                backgroundColor: isLight ? '#ffffff' : '#1e293b',
+                borderColor: isLight ? '#cbd5e1' : '#334155',
+                borderRadius: 16,
+                ...(isLight ? shadows.elevated : shadows.modal),
+              },
+            ]}
+          >
+            <Text
+              style={[
+                styles.menuTitle,
+                { color: isLight ? '#64748b' : '#94a3b8' },
+              ]}
+            >
+              Select Language
+            </Text>
+
+            {LANGUAGES.map((l) => {
+              const isSelected = l.code === lang;
+              return (
+                <TouchableOpacity
+                  key={l.code}
+                  onPress={() => {
+                    setLang(l.code);
+                    setIsOpen(false);
+                  }}
+                  activeOpacity={0.7}
                   style={[
-                    styles.menuTitle,
-                    { color: isLight ? '#64748b' : '#94a3b8' },
+                    styles.langItem,
+                    {
+                      backgroundColor: isSelected
+                        ? isLight
+                          ? '#ecfdf5'
+                          : 'rgba(0, 212, 136, 0.15)'
+                        : 'transparent',
+                      borderColor: isSelected
+                        ? isLight
+                          ? '#a7f3d0'
+                          : 'rgba(0, 212, 136, 0.3)'
+                        : 'transparent',
+                    },
                   ]}
                 >
-                  Select Language
-                </Text>
-
-                {LANGUAGES.map((l) => {
-                  const isSelected = l.code === lang;
-                  return (
-                    <TouchableOpacity
-                      key={l.code}
-                      onPress={() => {
-                        setLang(l.code);
-                        setIsOpen(false);
-                      }}
-                      activeOpacity={0.7}
+                  <View>
+                    <Text
                       style={[
-                        styles.langItem,
+                        styles.nativeNameText,
                         {
-                          backgroundColor: isSelected
+                          color: isSelected
                             ? isLight
-                              ? '#ecfdf5'
-                              : 'rgba(0, 212, 136, 0.15)'
-                            : 'transparent',
-                          borderColor: isSelected
-                            ? isLight
-                              ? '#a7f3d0'
-                              : 'rgba(0, 212, 136, 0.3)'
-                            : 'transparent',
+                              ? '#047857'
+                              : '#00D488'
+                            : isLight
+                            ? '#0f172a'
+                            : '#ffffff',
+                          fontWeight: isSelected ? '800' : '600',
                         },
                       ]}
                     >
-                      <View>
-                        <Text
-                          style={[
-                            styles.nativeNameText,
-                            {
-                              color: isSelected
-                                ? isLight
-                                  ? '#047857'
-                                  : '#00D488'
-                                : isLight
-                                ? '#0f172a'
-                                : '#ffffff',
-                              fontWeight: isSelected ? '800' : '600',
-                            },
-                          ]}
-                        >
-                          {l.nativeName}
-                        </Text>
-                        <Text
-                          style={[
-                            styles.englishNameText,
-                            { color: isLight ? '#64748b' : '#94a3b8' },
-                          ]}
-                        >
-                          {l.label}
-                        </Text>
-                      </View>
+                      {l.nativeName}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.englishNameText,
+                        { color: isLight ? '#64748b' : '#94a3b8' },
+                      ]}
+                    >
+                      {l.label}
+                    </Text>
+                  </View>
 
-                      {isSelected && (
-                        <Text style={{ color: '#00D488', fontSize: 16, fontWeight: '900' }}>✓</Text>
-                      )}
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            </TouchableWithoutFeedback>
+                  {isSelected && (
+                    <Text style={{ color: '#00D488', fontSize: 16, fontWeight: '900' }}>✓</Text>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
           </View>
-        </TouchableWithoutFeedback>
+        </View>
       </Modal>
     </View>
   );

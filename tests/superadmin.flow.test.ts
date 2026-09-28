@@ -1,5 +1,5 @@
 /**
- * Module 7 � Super Admin / Platform Admin Experience & Authoritative Backend Contract Verification
+ * Module 7 — Super Admin / Platform Admin Experience & Authoritative Backend Contract Verification
  *
  * Requirements covered:
  * 1.  PLATFORM_ADMIN authentication/authorization
@@ -85,7 +85,7 @@ describe('Module 7 — Super Admin ZERO GPS/Tracking Invariant', () => {
 // SECTION 2: AUTHORITATIVE BACKEND ROUTE CONTRACTS
 // ===========================================================
 
-describe('Module 7 � Authoritative Backend Route Contracts (PLATFORM_ADMIN)', () => {
+describe('Module 7 — Authoritative Backend Route Contracts (PLATFORM_ADMIN)', () => {
   it('2.1 SA_LIST_OPERATORS matches tenant.ts: GET/POST /api/v1/tenant/operators', () => {
     assert.equal(API_CONFIG.ENDPOINTS.SA_LIST_OPERATORS, '/api/v1/tenant/operators');
   });
@@ -134,7 +134,7 @@ describe('Module 7 � Authoritative Backend Route Contracts (PLATFORM_ADMIN)', 
 // SECTION 3: ROLE ISOLATION & NAVIGATION
 // ===========================================================
 
-describe('Module 7 � PLATFORM_ADMIN Role Isolation & Navigation', () => {
+describe('Module 7 — PLATFORM_ADMIN Role Isolation & Navigation', () => {
   it('3.1 PLATFORM_ADMIN navigation config exists with correct tabs', () => {
     const config = ROLE_NAVIGATION_CONFIGS['PLATFORM_ADMIN'];
     assert.ok(config, 'PLATFORM_ADMIN navigation config must exist');
@@ -164,7 +164,7 @@ describe('Module 7 � PLATFORM_ADMIN Role Isolation & Navigation', () => {
   it('3.4 OPERATOR_ADMIN must NOT appear in PLATFORM_ADMIN nav items', () => {
     const config = ROLE_NAVIGATION_CONFIGS['PLATFORM_ADMIN'];
     const tabIds = config.items.map((i) => i.id);
-    // LIVE_MAP and REVENUE are operator-specific � not in SA
+    // LIVE_MAP and REVENUE are operator-specific — not in SA
     assert.ok(!tabIds.includes('LIVE_MAP'), 'SA must NOT have LIVE_MAP tab');
     assert.ok(!tabIds.includes('REVENUE'), 'SA must NOT have REVENUE tab');
   });
@@ -174,7 +174,7 @@ describe('Module 7 � PLATFORM_ADMIN Role Isolation & Navigation', () => {
 // SECTION 4: TYPE DEFINITIONS
 // ===========================================================
 
-describe('Module 7 � Super Admin Type Definitions', () => {
+describe('Module 7 — Super Admin Type Definitions', () => {
   it('4.1 PlatformOperator has required fields', () => {
     const op: SuperAdminTypes.PlatformOperator = {
       id: 'op-1',
@@ -243,7 +243,7 @@ describe('Module 7 � Super Admin Type Definitions', () => {
 // SECTION 5: SERVICE LAYER STRUCTURE
 // ===========================================================
 
-describe('Module 7 � SuperAdminService Structure', () => {
+describe('Module 7 — SuperAdminService Structure', () => {
   it('5.1 superAdminService is an exported singleton', () => {
     assert.ok(SuperAdminServiceModule.superAdminService, 'superAdminService must be exported');
     assert.ok(
@@ -271,7 +271,7 @@ describe('Module 7 � SuperAdminService Structure', () => {
     // Verify that listStaff constructs proper params (no network call)
     let capturedEndpoint = '';
     const originalGet = apiClient.get.bind(apiClient);
-    // @ts-ignore � intercepting for test
+    // @ts-ignore — intercepting for test
     apiClient.get = (endpoint: string) => {
       capturedEndpoint = endpoint;
       return Promise.reject(new Error('test-intercept'));
@@ -281,7 +281,7 @@ describe('Module 7 � SuperAdminService Structure', () => {
       await superAdminService.listStaff({ tenantId: 'abc', role: 'DRIVER', search: 'john' });
     } catch (_) {}
 
-    // @ts-ignore � restore
+    // @ts-ignore — restore
     apiClient.get = originalGet;
 
     assert.ok(capturedEndpoint.includes('tenantId=abc'), 'Must include tenantId param');
@@ -295,7 +295,7 @@ describe('Module 7 � SuperAdminService Structure', () => {
 // SECTION 6: STORE STATE STRUCTURE
 // ===========================================================
 
-describe('Module 7 � SuperAdminStore State', () => {
+describe('Module 7 — SuperAdminStore State', () => {
   it('6.1 useSuperAdminStore is exported', () => {
     assert.ok(typeof SuperAdminStoreModule.useSuperAdminStore === 'function');
   });
@@ -361,10 +361,10 @@ describe('Module 7 � SuperAdminStore State', () => {
 });
 
 // ===========================================================
-// SECTION 7: BACKWARD COMPATIBILITY � MODULES 2-6 UNCHANGED
+// SECTION 7: BACKWARD COMPATIBILITY — MODULES 2-6 UNCHANGED
 // ===========================================================
 
-describe('Module 7 � Modules 2�6 Backward Compatibility', () => {
+describe('Module 7 — Modules 2-6 Backward Compatibility', () => {
   it('7.1 PASSENGER navigation config is unmodified', () => {
     const config = ROLE_NAVIGATION_CONFIGS['PASSENGER'];
     assert.equal(config.role, 'PASSENGER');
@@ -420,7 +420,7 @@ describe('Module 7 � Modules 2�6 Backward Compatibility', () => {
 // SECTION 8: VALIDATION / ERROR CONTRACT
 // ===========================================================
 
-describe('Module 7 � Validation & Error Propagation Contracts', () => {
+describe('Module 7 — Validation & Error Propagation Contracts', () => {
   it('8.1 createOperator input validation: companyName required (min 2 chars)', () => {
     const validate = (data: SuperAdminTypes.CreateOperatorInput) => {
       const errors: string[] = [];
@@ -505,7 +505,7 @@ describe('Module 7 � Validation & Error Propagation Contracts', () => {
 // SECTION 9: SCREENS & FILE PRESENCE
 // ===========================================================
 
-describe('Module 7 � Screen Files Presence', () => {
+describe('Module 7 — Screen Files Presence', () => {
   const screenFiles = [
     './src/screens/superadmin/SuperAdminApp.tsx',
     './src/screens/superadmin/SuperAdminHomeScreen.tsx',

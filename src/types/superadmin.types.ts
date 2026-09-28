@@ -1,5 +1,5 @@
 /**
- * Authoritative Type Definitions for Module 7 — Super Admin / Platform Admin
+ * Authoritative Type Definitions for Module 7 â€” Super Admin / Platform Admin
  *
  * Derived exclusively from the Fastify backend contracts:
  * - apps/api/src/routes/tenant.ts   (PLATFORM_ADMIN routes)
@@ -86,7 +86,7 @@ export interface CreateOperatorResult {
 }
 
 // ============================================================
-// Platform staff (operator.ts backend — staffGuards)
+// Platform staff (operator.ts backend â€” staffGuards)
 // ============================================================
 
 export interface PlatformStaffMember {
@@ -121,12 +121,31 @@ export interface CreatePlatformStaffInput {
   role: 'DRIVER' | 'CONDUCTOR';
   password: string;
   tenantId: string;
+  busId?: string;
+  bus?: string;
 }
 
 /** PUT /api/v1/operator/staff/:staffId */
 export interface UpdatePlatformStaffInput {
   fullName?: string;
   busId?: string | null;
+}
+
+// ============================================================
+// Platform Bus with Crew Assignment
+// ============================================================
+
+export interface PlatformBusWithCrew {
+  id: string;
+  registrationNumber: string;
+  model: string;
+  totalSeats: number;
+  seatingType?: string;
+  status: 'ACTIVE' | 'IN_TRANSIT' | 'MAINTENANCE' | 'PENDING_APPROVAL' | 'DECOMMISSIONED';
+  tenantId: string;
+  operatorName: string;
+  driverName?: string;
+  conductorName?: string;
 }
 
 // ============================================================

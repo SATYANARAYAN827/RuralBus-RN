@@ -6,7 +6,9 @@
 import React, { useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useNavigationStore } from '../../navigation/navigation.store';
+import { useAuthStore } from '../../stores/auth.store';
 import { useOperatorStore } from '../../stores/operator.store';
+import { useNotificationStore } from '../../stores/notification.store';
 
 import { OperatorHomeScreen } from './OperatorHomeScreen';
 import { OperatorBusesScreen } from './OperatorBusesScreen';
@@ -26,10 +28,16 @@ import { ResetStaffPasswordModal } from './modals/ResetStaffPasswordModal';
 import { DispatchTripModal } from './modals/DispatchTripModal';
 import { AddRouteModal } from './modals/AddRouteModal';
 import { AddStopModal } from './modals/AddStopModal';
+import { BusApprovedModal } from './modals/BusApprovedModal';
 
 export const OperatorAdminApp: React.FC = () => {
   const { activeTab, setActiveTab } = useNavigationStore();
+  const { user } = useAuthStore();
   const { fetchRevenue, fetchFleetRadar, fetchBuses, fetchStaff, fetchTrips, fetchRoutes } = useOperatorStore();
+  const { getPendingPopupsForUser, markPopupShown } = useNotificationStore();
+
+  const pendingPopups = getPendingPopupsForUser('OPERATOR_ADMIN', user?.tenantId, user?.phone || undefined);
+  const activeApprovalPopup = pendingPopups.length > 0 ? pendingPopups[0] : null;
 
   useEffect(() => {
     // Initial fetch of authoritative tenant data
@@ -85,6 +93,19 @@ export const OperatorAdminApp: React.FC = () => {
       <DispatchTripModal />
       <AddRouteModal />
       <AddStopModal />
+
+      {/* Credential-Isolated Bus Approval Popup */}
+      {activeApprovalPopup && (
+        <BusApprovedModal
+          isOpen={Boolean(activeApprovalPopup)}
+          notification={activeApprovalPopup}
+          onClose={() => markPopupShown(activeApprovalPopup.id)}
+          onViewFleet={() => {
+            markPopupShown(activeApprovalPopup.id);
+            setActiveTab('BUSES');
+          }}
+        />
+      )}
     </View>
   );
 };

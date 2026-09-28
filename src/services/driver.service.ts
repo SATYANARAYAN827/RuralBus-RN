@@ -44,10 +44,10 @@ export class DriverService {
     if (!tripId || typeof tripId !== 'string') {
       throw new Error('Trip ID is required to start commercial duty');
     }
-    const res = await apiClient.post<DriverDutyTrip>(
+    const res = await apiClient.post<any>(
       API_CONFIG.ENDPOINTS.DRIVER_START_TRIP(tripId)
     );
-    return res.data;
+    return res.data?.trip || res.data;
   }
 
   /**
@@ -58,10 +58,10 @@ export class DriverService {
     if (!tripId || typeof tripId !== 'string') {
       throw new Error('Trip ID is required to end commercial duty');
     }
-    const res = await apiClient.post<DriverDutyTrip>(
+    const res = await apiClient.post<any>(
       API_CONFIG.ENDPOINTS.DRIVER_END_TRIP(tripId)
     );
-    return res.data;
+    return res.data?.trip || res.data;
   }
 
   /**

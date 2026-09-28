@@ -36,6 +36,7 @@ export const OperatorBusesScreen: React.FC = () => {
     isLoadingBuses,
     busError,
     fetchBuses,
+    updateBus,
     setIsAddBusModalOpen,
     setIsEditBusModalOpen,
     setEditingBus,
@@ -224,16 +225,60 @@ export const OperatorBusesScreen: React.FC = () => {
             {/* Crew Assignments */}
             <View style={styles.crewSection}>
               <View style={styles.crewCol}>
-                <Text style={styles.crewRole}>ASSIGNED DRIVER</Text>
-                <Text style={[styles.crewName, { color: colors.textPrimary }]}>
-                  {bus.assignedDriver ? `👨‍✈️ ${bus.assignedDriver.name}` : 'Unassigned'}
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <Text style={styles.crewRole}>ASSIGNED DRIVER</Text>
+                  {Boolean(bus.assignedDriver || bus.driverName || bus.driver) && (
+                    <TouchableOpacity
+                      onPress={() => updateBus(bus.id, { driverId: null })}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={{ fontSize: 10, color: '#f43f5e', fontWeight: '800' }}>Unassign</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+                <Text
+                  style={[
+                    styles.crewName,
+                    {
+                      color: (bus.assignedDriver || bus.driverName || bus.driver)
+                        ? (isLight ? '#047857' : '#00D488')
+                        : colors.textMuted,
+                      fontWeight: (bus.assignedDriver || bus.driverName || bus.driver) ? '800' : '500',
+                    },
+                  ]}
+                >
+                  {(bus.assignedDriver?.name || bus.driverName || bus.driver)
+                    ? `👨‍✈️ ${bus.assignedDriver?.name || bus.driverName || bus.driver}`
+                    : 'Unassigned'}
                 </Text>
               </View>
 
               <View style={styles.crewCol}>
-                <Text style={styles.crewRole}>ASSIGNED CONDUCTOR</Text>
-                <Text style={[styles.crewName, { color: colors.textPrimary }]}>
-                  {bus.assignedConductor ? `🎫 ${bus.assignedConductor.name}` : 'Unassigned'}
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <Text style={styles.crewRole}>ASSIGNED CONDUCTOR</Text>
+                  {Boolean(bus.assignedConductor || bus.conductorName || bus.conductor) && (
+                    <TouchableOpacity
+                      onPress={() => updateBus(bus.id, { conductorId: null })}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={{ fontSize: 10, color: '#f43f5e', fontWeight: '800' }}>Unassign</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+                <Text
+                  style={[
+                    styles.crewName,
+                    {
+                      color: (bus.assignedConductor || bus.conductorName || bus.conductor)
+                        ? (isLight ? '#047857' : '#00D488')
+                        : colors.textMuted,
+                      fontWeight: (bus.assignedConductor || bus.conductorName || bus.conductor) ? '800' : '500',
+                    },
+                  ]}
+                >
+                  {(bus.assignedConductor?.name || bus.conductorName || bus.conductor)
+                    ? `🎫 ${bus.assignedConductor?.name || bus.conductorName || bus.conductor}`
+                    : 'Unassigned'}
                 </Text>
               </View>
             </View>

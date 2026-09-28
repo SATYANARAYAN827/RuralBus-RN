@@ -88,7 +88,7 @@ export const usePassengerStore = create<PassengerState>((set, get) => ({
   // Initial Search State
   origin: '',
   destination: '',
-  journeyDate: '25-09-2026',
+  journeyDate: '26-09-2026',
   busTypeFilter: 'ALL',
   trips: FALLBACK_BUSES,
   selectedTrip: null,

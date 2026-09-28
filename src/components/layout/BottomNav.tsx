@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -50,16 +50,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
             style={[
               styles.tabButton,
               {
-                backgroundColor: isActive
-                  ? isLight
-                    ? '#ecfdf5'
-                    : 'rgba(0, 212, 136, 0.12)'
-                  : 'transparent',
-                borderColor: isActive
-                  ? isLight
-                    ? '#059669'
-                    : roleBadgeColor
-                  : 'transparent',
+                backgroundColor: 'transparent',
               },
             ]}
           >
@@ -73,8 +64,8 @@ export const BottomNav: React.FC<BottomNavProps> = ({
                       ? '#047857'
                       : roleBadgeColor
                     : isLight
-                    ? '#475569'
-                    : '#cbd5e1',
+                    ? '#64748b'
+                    : '#94a3b8',
                   fontWeight: isActive ? '800' : '600',
                 },
               ]}
@@ -82,6 +73,14 @@ export const BottomNav: React.FC<BottomNavProps> = ({
             >
               {item.label}
             </Text>
+            {isActive && (
+              <View
+                style={[
+                  styles.activeIndicator,
+                  { backgroundColor: isLight ? '#047857' : roleBadgeColor },
+                ]}
+              />
+            )}
           </TouchableOpacity>
         );
       })}
@@ -106,12 +105,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 48,
-    borderRadius: 10,
-    borderWidth: 1.5,
     paddingVertical: 4,
     paddingHorizontal: 4,
-    marginHorizontal: 2,
     gap: 3,
+    position: 'relative',
   },
   iconText: {
     fontSize: 18,
@@ -120,5 +117,12 @@ const styles = StyleSheet.create({
   labelText: {
     fontSize: 11,
     letterSpacing: -0.1,
+  },
+  activeIndicator: {
+    position: 'absolute',
+    bottom: -2,
+    width: 20,
+    height: 3,
+    borderRadius: 2,
   },
 });

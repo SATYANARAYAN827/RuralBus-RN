@@ -68,7 +68,7 @@ export const AddOperatorModal: React.FC<Props> = ({ isOpen, onClose }) => {
       onClose={() => { reset(); onClose(); }}
       title="Register Transport Operator"
       subtitle="Creates operator account + owner login credentials"
-      icon="??"
+      icon="🏢"
       actions={
         <>
           <Button title="Cancel" variant="outline" size="md" onPress={() => { reset(); onClose(); }} />
@@ -84,13 +84,13 @@ export const AddOperatorModal: React.FC<Props> = ({ isOpen, onClose }) => {
     >
       {error ? (
         <View style={styles.errorBox}>
-          <Text style={styles.errorText}>?? {error}</Text>
+          <Text style={styles.errorText}>⚠️ {error}</Text>
         </View>
       ) : null}
 
       <View style={{ gap: 4 }}>
         <Text style={[styles.smsNote, { color: colors.textSecondary }]}>
-          ?? Initial credentials will be sent via SMS to the owner's mobile number.
+          📱 Initial credentials will be sent via SMS to the owner's mobile number.
         </Text>
       </View>
 
@@ -98,7 +98,7 @@ export const AddOperatorModal: React.FC<Props> = ({ isOpen, onClose }) => {
       <TextInput label="OWNER FULL NAME *" placeholder="e.g. Ramesh Patel" value={ownerName} onChangeText={setOwnerName} />
       <TextInput label="OWNER MOBILE (10-DIGIT) *" placeholder="e.g. 9876543210" value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
       <TextInput label="OWNER EMAIL (OPTIONAL)" placeholder="e.g. owner@company.in" value={email} onChangeText={setEmail} keyboardType="email-address" />
-      <TextInput label="INITIAL PASSWORD *" placeholder="Min. 8 characters" value={password} onChangeText={setPassword} secureTextEntry leftIcon="??" />
+      <TextInput label="INITIAL PASSWORD *" placeholder="Min. 8 characters" value={password} onChangeText={setPassword} secureTextEntry leftIcon="🔒" />
       <TextInput label="BUSINESS CODE (OPTIONAL)" placeholder="Auto-generated if blank" value={businessCode} onChangeText={setBusinessCode} />
     </Modal>
   );

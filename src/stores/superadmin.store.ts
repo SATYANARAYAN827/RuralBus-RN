@@ -24,8 +24,10 @@ import type {
   UpdatePlatformStaffInput,
   SuperAdminProfile,
   PlatformDashboardSummary,
+  PlatformBusWithCrew,
 } from '../types/superadmin.types';
 import { superAdminService } from '../services/superadmin.service';
+import { useNotificationStore } from './notification.store';
 
 interface SuperAdminState {
   // 1. Dashboard Summary (derived from operator list)
@@ -67,6 +69,14 @@ interface SuperAdminState {
   updateStaffStatus: (staffId: string, isActive: boolean) => Promise<boolean>;
   deleteStaff: (staffId: string) => Promise<boolean>;
 
+  // 3.5 Platform Buses & Crew Assignment
+  buses: PlatformBusWithCrew[];
+  isLoadingBuses: boolean;
+  busesError: string | null;
+  fetchBuses: () => Promise<void>;
+  approveBusRequest: (busId: string) => Promise<boolean>;
+  rejectBusRequest: (busId: string, reason?: string) => Promise<boolean>;
+
   // 4. Super Admin Profile
   profile: SuperAdminProfile | null;
   isLoadingProfile: boolean;
@@ -87,6 +97,9 @@ interface SuperAdminState {
   setIsEditStaffModalOpen: (open: boolean) => void;
   isDeleteStaffConfirmId: string | null;
   setIsDeleteStaffConfirmId: (id: string | null) => void;
+
+  isRegisterBusModalOpen: boolean;
+  setIsRegisterBusModalOpen: (open: boolean) => void;
 
   // 6. Cleanup
   resetAllState: () => void;
@@ -133,7 +146,13 @@ export const useSuperAdminStore = create<SuperAdminState>((set, get) => ({
     set({ isLoadingOperators: true, operatorError: null });
     try {
       await superAdminService.createOperator(data);
-      await get().fetchOperators();
+      const operators = await superAdminService.listOperators();
+      set({
+        operators,
+        dashboardSummary: computeDashboard(operators),
+        isLoadingOperators: false,
+        operatorError: null,
+      });
       return true;
     } catch (err: any) {
       set({ operatorError: err.message || 'Failed to create operator', isLoadingOperators: false });
@@ -213,7 +232,7 @@ export const useSuperAdminStore = create<SuperAdminState>((set, get) => ({
     set({ isLoadingStaff: true, staffError: null });
     try {
       await superAdminService.createStaff(data);
-      await get().fetchStaff();
+      await Promise.all([get().fetchStaff(), get().fetchBuses()]);
       return true;
     } catch (err: any) {
       set({ staffError: err.message || 'Failed to create staff member', isLoadingStaff: false });
@@ -224,8 +243,9 @@ export const useSuperAdminStore = create<SuperAdminState>((set, get) => ({
   updateStaff: async (staffId, data) => {
     set({ isLoadingStaff: true, staffError: null });
     try {
-      await superAdminService.updateStaff(staffId, data);
-      await get().fetchStaff();
+      const realId = get().staff.find((s) => s.id === staffId || s.userId === staffId)?.id || staffId;
+      await superAdminService.updateStaff(realId, data);
+      await Promise.all([get().fetchStaff(), get().fetchBuses()]);
       return true;
     } catch (err: any) {
       set({ staffError: err.message || 'Failed to update staff member', isLoadingStaff: false });
@@ -236,7 +256,8 @@ export const useSuperAdminStore = create<SuperAdminState>((set, get) => ({
   updateStaffStatus: async (staffId, isActive) => {
     set({ isLoadingStaff: true, staffError: null });
     try {
-      await superAdminService.updateStaffStatus(staffId, isActive);
+      const realId = get().staff.find((s) => s.id === staffId || s.userId === staffId)?.id || staffId;
+      await superAdminService.updateStaffStatus(realId, isActive);
       await get().fetchStaff();
       return true;
     } catch (err: any) {
@@ -248,11 +269,107 @@ export const useSuperAdminStore = create<SuperAdminState>((set, get) => ({
   deleteStaff: async (staffId) => {
     set({ isLoadingStaff: true, staffError: null });
     try {
-      await superAdminService.deleteStaff(staffId);
-      await get().fetchStaff();
+      const realId = get().staff.find((s) => s.id === staffId || s.userId === staffId)?.id || staffId;
+      await superAdminService.deleteStaff(realId);
+      await Promise.all([get().fetchStaff(), get().fetchBuses()]);
       return true;
     } catch (err: any) {
       set({ staffError: err.message || 'Failed to delete staff member', isLoadingStaff: false });
+      return false;
+    }
+  },
+
+  // 3.5 Platform Buses & Crew Assignment
+  buses: [],
+  isLoadingBuses: false,
+  busesError: null,
+  fetchBuses: async () => {
+    set({ isLoadingBuses: true, busesError: null });
+    try {
+      let currentOps = get().operators;
+      if (currentOps.length === 0) {
+        await get().fetchOperators();
+        currentOps = get().operators;
+      }
+      const buses = await superAdminService.listAllBusesWithCrew(currentOps);
+      set({ buses, isLoadingBuses: false });
+    } catch (err: any) {
+      set({ busesError: err.message || 'Failed to load fleet buses', isLoadingBuses: false });
+    }
+  },
+
+  approveBusRequest: async (busId: string) => {
+    set({ isLoadingBuses: true });
+    try {
+      const bus = get().buses.find((b) => b.id === busId);
+      await superAdminService.updateBusStatus(busId, 'ACTIVE');
+
+      // Update local state immediately
+      set((state) => ({
+        buses: state.buses.map((b) => (b.id === busId ? { ...b, status: 'ACTIVE' } : b)),
+        isLoadingBuses: false,
+      }));
+
+      if (bus) {
+        const op = get().operators.find(
+          (o) => o.id === bus.tenantId || o.companyName === bus.operatorName
+        );
+        // Dispatch scoped notification strictly for requesting operator
+        useNotificationStore.getState().addNotification({
+          type: 'BUS_APPROVED',
+          title: `Bus ${bus.registrationNumber} Approved`,
+          message: `Your bus "${bus.registrationNumber} (${bus.model})" has been approved by Platform Super Admin. It is now ACTIVE and available for passenger transit, driver assignment, and trip dispatch.`,
+          targetRole: 'OPERATOR_ADMIN',
+          targetTenantId: bus.tenantId,
+          targetPhone: op?.ownerPhone || op?.contactPhone,
+          busId: bus.id,
+          busReg: bus.registrationNumber,
+          busModel: bus.model,
+          operatorName: bus.operatorName,
+        });
+      }
+
+      await get().fetchBuses();
+      return true;
+    } catch (err: any) {
+      set({ busesError: err.message || 'Failed to approve bus', isLoadingBuses: false });
+      return false;
+    }
+  },
+
+  rejectBusRequest: async (busId: string, reason?: string) => {
+    set({ isLoadingBuses: true });
+    try {
+      const bus = get().buses.find((b) => b.id === busId);
+      await superAdminService.updateBusStatus(busId, 'DECOMMISSIONED');
+
+      set((state) => ({
+        buses: state.buses.map((b) => (b.id === busId ? { ...b, status: 'DECOMMISSIONED' } : b)),
+        isLoadingBuses: false,
+      }));
+
+      if (bus) {
+        const op = get().operators.find(
+          (o) => o.id === bus.tenantId || o.companyName === bus.operatorName
+        );
+        useNotificationStore.getState().addNotification({
+          type: 'BUS_REJECTED',
+          title: `Bus ${bus.registrationNumber} Not Approved`,
+          message: `Your bus "${bus.registrationNumber} (${bus.model})" was reviewed and not approved by Platform Super Admin. Reason: ${reason || 'Permit documentation incomplete'}.`,
+          targetRole: 'OPERATOR_ADMIN',
+          targetTenantId: bus.tenantId,
+          targetPhone: op?.ownerPhone || op?.contactPhone,
+          busId: bus.id,
+          busReg: bus.registrationNumber,
+          busModel: bus.model,
+          operatorName: bus.operatorName,
+        });
+      }
+
+      await get().fetchBuses();
+      return true;
+    } catch (err: any) {
+      set({ busesError: err.message || 'Failed to reject bus', isLoadingBuses: false });
       return false;
     }
   },
@@ -286,6 +403,9 @@ export const useSuperAdminStore = create<SuperAdminState>((set, get) => ({
   isDeleteStaffConfirmId: null,
   setIsDeleteStaffConfirmId: (id) => set({ isDeleteStaffConfirmId: id }),
 
+  isRegisterBusModalOpen: false,
+  setIsRegisterBusModalOpen: (open) => set({ isRegisterBusModalOpen: open }),
+
   // 6. Cleanup
   resetAllState: () => {
     set({
@@ -315,6 +435,10 @@ export const useSuperAdminStore = create<SuperAdminState>((set, get) => ({
       isAddStaffModalOpen: false,
       isEditStaffModalOpen: false,
       isDeleteStaffConfirmId: null,
+      isRegisterBusModalOpen: false,
+      buses: [],
+      isLoadingBuses: false,
+      busesError: null,
     });
   },
 }));

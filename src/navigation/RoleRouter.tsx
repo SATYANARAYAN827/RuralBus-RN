@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,10 @@ import { useTheme } from '../theme';
 import { useResponsive } from '../theme/useResponsive';
 import { useNavigationStore } from './navigation.store';
 import { useAuthStore } from '../stores/auth.store';
+import { useOperatorStore } from '../stores/operator.store';
+import { useSuperAdminStore } from '../stores/superadmin.store';
+import { useNotificationStore } from '../stores/notification.store';
+import { NotificationsModal } from '../components/common/NotificationsModal';
 import { ROLE_NAVIGATION_CONFIGS } from './roleNavigationConfig';
 import { ResponsiveShell } from '../components/layout/ResponsiveShell';
 import { LoginScreen, RegisterScreen, ForceChangePasswordModal } from '../screens/auth';
@@ -37,30 +41,123 @@ export const RoleRouter: React.FC = () => {
     activeTab,
     isMobileNavOpen,
     isAuthenticated,
-    user,
+    user: navUser,
     unreadNotifsCount,
     setActiveRole,
     setActiveTab,
     toggleMobileNav,
     setMobileNavOpen,
+    setUser,
     login,
     logout,
   } = useNavigationStore();
 
   const authStore = useAuthStore();
+  const operatorStore = useOperatorStore();
+  const superAdminStore = useSuperAdminStore();
+  const notificationStore = useNotificationStore();
+
   const [authView, setAuthView] = useState<'LOGIN' | 'REGISTER'>('LOGIN');
   const [isDemoModalOpen, setIsDemoModalOpen] = useState(false);
   const [testInputValue, setTestInputValue] = useState('');
+  const [isForcePasswordDismissed, setIsForcePasswordDismissed] = useState(false);
+  const [isNotifModalOpen, setIsNotifModalOpen] = useState(false);
 
-  // Sync active role with logged-in user role
+  const effectiveUser = authStore.user || navUser;
+
+  // Initial fetch of authoritative counts for the active role
   useEffect(() => {
-    if (authStore.user?.role && authStore.user.role !== activeRole) {
-      setActiveRole(authStore.user.role);
+    if (activeRole === 'OPERATOR_ADMIN' && authStore.isAuthenticated) {
+      operatorStore.fetchBuses();
+      operatorStore.fetchStaff();
+      operatorStore.fetchFleetRadar();
+      operatorStore.fetchRoutes();
+      operatorStore.fetchTrips();
+    } else if (activeRole === 'PLATFORM_ADMIN' && authStore.isAuthenticated) {
+      superAdminStore.fetchOperators();
+      superAdminStore.fetchStaff();
+      superAdminStore.fetchBuses();
     }
-  }, [authStore.user?.role, activeRole, setActiveRole]);
+  }, [activeRole, authStore.isAuthenticated]);
+
+  // Sync active role and user identity with authoritative logged-in user from authStore
+  useEffect(() => {
+    if (authStore.user) {
+      if (authStore.user.role !== activeRole) {
+        setActiveRole(authStore.user.role, authStore.user);
+      } else if (navUser?.phone !== authStore.user.phone || navUser?.fullName !== authStore.user.fullName) {
+        setUser(authStore.user);
+      }
+    }
+  }, [authStore.user, activeRole, setActiveRole, setUser, navUser]);
 
   const config = ROLE_NAVIGATION_CONFIGS[activeRole] || ROLE_NAVIGATION_CONFIGS.PASSENGER;
   const currentItem = config.items.find((i) => i.id === activeTab) || config.items[0];
+
+  // Dynamically compute badges from real live store state
+  const dynamicNavItems = useMemo(() => {
+    if (activeRole === 'OPERATOR_ADMIN') {
+      const onRoad = operatorStore.radarTotalActive || operatorStore.radarBuses.length;
+      return config.items.map((item) => {
+        if (item.id === 'BUSES') {
+          return { ...item, badge: String(operatorStore.buses.length) };
+        }
+        if (item.id === 'STAFF') {
+          return { ...item, badge: String(operatorStore.staff.length) };
+        }
+        if (item.id === 'ROUTES') {
+          return { ...item, badge: operatorStore.routes.length > 0 ? String(operatorStore.routes.length) : undefined };
+        }
+        if (item.id === 'TRIPS') {
+          return { ...item, badge: operatorStore.trips.length > 0 ? String(operatorStore.trips.length) : undefined };
+        }
+        if (item.id === 'LIVE_MAP') {
+          return { ...item, badge: onRoad > 0 ? `${onRoad} Live` : 'Live' };
+        }
+        return item;
+      });
+    }
+
+    if (activeRole === 'PLATFORM_ADMIN') {
+      const pendingRequestsCount = superAdminStore.buses.filter(
+        (b) => b.status === 'PENDING_APPROVAL'
+      ).length;
+
+      return config.items.map((item) => {
+        if (item.id === 'OWNERS') {
+          return { ...item, badge: String(superAdminStore.operators.length) };
+        }
+        if (item.id === 'BUSES') {
+          return { ...item, badge: String(superAdminStore.buses.length) };
+        }
+        if (item.id === 'STAFF') {
+          return { ...item, badge: String(superAdminStore.staff.length) };
+        }
+        if (item.id === 'REQUESTS') {
+          return {
+            ...item,
+            badge: pendingRequestsCount > 0 ? String(pendingRequestsCount) : undefined,
+            badgeBg: '#f59e0b',
+          };
+        }
+        return item;
+      });
+    }
+
+    return config.items;
+  }, [
+    activeRole,
+    config.items,
+    operatorStore.buses.length,
+    operatorStore.staff.length,
+    operatorStore.routes.length,
+    operatorStore.trips.length,
+    operatorStore.radarTotalActive,
+    operatorStore.radarBuses.length,
+    superAdminStore.operators.length,
+    superAdminStore.buses.length,
+    superAdminStore.staff.length,
+  ]);
 
   // If unauthenticated: Render Golden Login or Register Screen
   if (!isAuthenticated && !authStore.isAuthenticated) {
@@ -86,41 +183,63 @@ export const RoleRouter: React.FC = () => {
   return (
     <>
       <ResponsiveShell
-        navItems={config.items}
-        bottomNavItems={config.items.filter((item) => config.bottomTabIds.includes(item.id))}
+        navItems={dynamicNavItems}
+        bottomNavItems={dynamicNavItems.filter((item) => config.bottomTabIds.includes(item.id))}
         activeTab={activeTab}
         onSelectTab={setActiveTab}
         portalTitle={config.portalTitle}
         portalSubtitle={config.portalSubtitle}
-        activeViewTitle={currentItem.label}
+        activeViewTitle={
+          activeRole === 'PASSENGER'
+            ? activeTab === 'HOME'
+              ? 'Home & Live Radar'
+              : currentItem.label
+            : activeRole === 'OPERATOR_ADMIN'
+            ? activeTab === 'HOME'
+              ? 'Fleet Operations HUD'
+              : activeTab === 'BUSES'
+              ? `My Fleet Buses (${operatorStore.buses.length})`
+              : activeTab === 'STAFF'
+              ? `Staff Roster (${operatorStore.staff.length})`
+              : activeTab === 'ROUTES'
+              ? `Routes & Stops (${operatorStore.routes.length})`
+              : activeTab === 'TRIPS'
+              ? `Daily Trips (${operatorStore.trips.length})`
+              : currentItem.label
+            : activeRole === 'PLATFORM_ADMIN'
+            ? activeTab === 'HOME'
+              ? 'System Overview'
+              : activeTab === 'OWNERS'
+              ? `Fleet Owners (${superAdminStore.operators.length})`
+              : activeTab === 'BUSES'
+              ? `Fleet Buses (${superAdminStore.buses.length})`
+              : activeTab === 'STAFF'
+              ? `Platform Staff (${superAdminStore.staff.length})`
+              : activeTab === 'ROUTES'
+              ? 'Corridor Routes'
+              : activeTab === 'TRIPS'
+              ? 'Dispatched Trips'
+              : activeTab === 'REQUESTS'
+              ? `Pending Requests (${superAdminStore.buses.filter((b) => b.status === 'PENDING_APPROVAL').length})`
+              : currentItem.label
+            : currentItem.label
+        }
+        scrollable={activeRole !== 'PASSENGER'}
         icon={config.icon}
         roleBadge={config.roleBadge}
         roleBadgeColor={config.roleBadgeColor}
         roleBadgeBg={config.roleBadgeBg}
-        user={user || authStore.user}
+        user={effectiveUser}
         isMobileNavOpen={isMobileNavOpen}
         onToggleMobileNav={toggleMobileNav}
         onCloseMobileNav={() => setMobileNavOpen(false)}
-        unreadNotifsCount={unreadNotifsCount}
-        onOpenNotifs={() => {}}
+        unreadNotifsCount={notificationStore.getUnreadCountForUser(activeRole, effectiveUser?.tenantId, effectiveUser?.phone || undefined)}
+        onOpenNotifs={() => setIsNotifModalOpen(true)}
         onLogout={() => {
           authStore.logout();
           logout();
         }}
-        extraHeaderActions={
-          <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
-            <Button
-              title="Switch Role"
-              variant="outline"
-              size="sm"
-              onPress={() => {
-                const roles: UserRole[] = ['PASSENGER', 'DRIVER', 'CONDUCTOR', 'OPERATOR_ADMIN', 'PLATFORM_ADMIN'];
-                const nextIdx = (roles.indexOf(activeRole) + 1) % roles.length;
-                setActiveRole(roles[nextIdx]);
-              }}
-            />
-          </View>
-        }
+        extraHeaderActions={null}
       >
         {activeRole === 'PASSENGER' ? (
           <PassengerApp />
@@ -141,13 +260,13 @@ export const RoleRouter: React.FC = () => {
             style={{ marginBottom: 16 }}
           >
             <View style={styles.roleBannerHeader}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <Text style={{ fontSize: 18 }}>{config.icon}</Text>
-                <View>
-                  <Text style={[styles.bannerTitle, { color: colors.textPrimary }]}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
+                <Text style={{ fontSize: 18, flexShrink: 0 }}>{config.icon}</Text>
+                <View style={{ flex: 1, minWidth: 0 }}>
+                  <Text style={[styles.bannerTitle, { color: colors.textPrimary }]} numberOfLines={1} ellipsizeMode="tail">
                     {config.portalTitle}
                   </Text>
-                  <Text style={[styles.bannerDesc, { color: colors.textSecondary }]}>
+                  <Text style={[styles.bannerDesc, { color: colors.textSecondary }]} numberOfLines={1} ellipsizeMode="tail">
                     {config.portalSubtitle}
                   </Text>
                 </View>
@@ -336,7 +455,19 @@ export const RoleRouter: React.FC = () => {
 
       {/* Mandatory Force Password Change Modal (Shown if user flag is active) */}
       <ForceChangePasswordModal
-        isOpen={Boolean(authStore.isAuthenticated && authStore.user?.mustChangePassword)}
+        isOpen={Boolean(authStore.isAuthenticated && authStore.user?.mustChangePassword && !isForcePasswordDismissed)}
+        onClose={() => setIsForcePasswordDismissed(true)}
+      />
+
+      {/* Global In-App Notifications Modal */}
+      <NotificationsModal
+        isOpen={isNotifModalOpen}
+        onClose={() => setIsNotifModalOpen(false)}
+        userRole={activeRole}
+        tenantId={effectiveUser?.tenantId}
+        userPhone={effectiveUser?.phone || undefined}
+        onNavigateToRequests={() => setActiveTab('REQUESTS')}
+        onNavigateToBuses={() => setActiveTab('BUSES')}
       />
     </>
   );

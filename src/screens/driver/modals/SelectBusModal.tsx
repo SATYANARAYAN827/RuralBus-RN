@@ -19,10 +19,22 @@ export const SelectBusModal: React.FC<SelectBusModalProps> = ({
   const { colors, brandColors, isLight } = useTheme();
   const { user } = useAuthStore();
   const { activeTrip, isActionLoading } = useDriverStore();
+  const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (isOpen) {
+      setErrorMsg(null);
+    }
+  }, [isOpen]);
 
   const handleConfirm = async () => {
     if (activeTrip?.id) {
-      await onStartRun(activeTrip.id);
+      setErrorMsg(null);
+      try {
+        await onStartRun(activeTrip.id);
+      } catch (err: any) {
+        setErrorMsg(err.message || 'Failed to start commercial trip run');
+      }
     }
   };
 
@@ -55,6 +67,22 @@ export const SelectBusModal: React.FC<SelectBusModalProps> = ({
       }
     >
       <View style={styles.body}>
+        {errorMsg ? (
+          <View
+            style={[
+              styles.errorBox,
+              {
+                backgroundColor: isLight ? 'rgba(239, 68, 68, 0.1)' : 'rgba(239, 68, 68, 0.2)',
+                borderColor: '#ef4444',
+              },
+            ]}
+          >
+            <Text style={[styles.errorText, { color: isLight ? '#b91c1c' : '#f87171' }]}>
+              ⚠️ {errorMsg}
+            </Text>
+          </View>
+        ) : null}
+
         <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>
           SELECT FLEET VEHICLE FOR TODAY'S RUN
         </Text>
@@ -166,5 +194,16 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 18,
     fontWeight: '600',
+  },
+  errorBox: {
+    padding: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    marginBottom: 4,
+  },
+  errorText: {
+    fontSize: 12,
+    fontWeight: '700',
+    lineHeight: 16,
   },
 });

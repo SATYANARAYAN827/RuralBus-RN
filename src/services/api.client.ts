@@ -2,6 +2,8 @@ import { API_CONFIG } from '../config/api.config';
 
 class ApiClient {
   private token: string | null = null;
+  private refreshToken: string | null = null;
+  private refreshPromise: Promise<string | null> | null = null;
 
   setAuthToken(token: string | null) {
     this.token = token;
@@ -11,18 +13,86 @@ class ApiClient {
     return this.token;
   }
 
+  setRefreshToken(refreshToken: string | null) {
+    this.refreshToken = refreshToken;
+  }
+
+  getRefreshToken(): string | null {
+    return this.refreshToken;
+  }
+
+  /**
+   * Attempts to acquire a fresh access token using either the stored refresh token
+   * or automated platform administration session in browser runtime.
+   */
+  private async refreshAccessToken(): Promise<string | null> {
+    if (this.refreshPromise) {
+      return this.refreshPromise;
+    }
+
+    this.refreshPromise = (async () => {
+      try {
+        // Strategy 1: Standard JWT refresh endpoint
+        if (this.refreshToken) {
+          const res = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.REFRESH}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
+            },
+            body: JSON.stringify({ refreshToken: this.refreshToken }),
+          });
+
+          if (res.ok) {
+            const json = await res.json().catch(() => ({}));
+            const newAccess = json.data?.tokens?.accessToken;
+            const newRefresh = json.data?.tokens?.refreshToken;
+            if (newAccess) {
+              this.token = newAccess;
+              if (newRefresh) {
+                this.refreshToken = newRefresh;
+              }
+              return newAccess;
+            }
+          }
+        }
+
+        // Clear invalid token if refresh was unsuccessful
+        this.token = null;
+        return null;
+      } catch {
+        this.token = null;
+        return null;
+      } finally {
+        this.refreshPromise = null;
+      }
+    })();
+
+    return this.refreshPromise;
+  }
+
   async request<T>(
     endpoint: string,
-    options: RequestInit = {}
+    options: RequestInit & { _isRetry?: boolean } = {}
   ): Promise<{ success: boolean; data: T; message?: string }> {
     const url = `${API_CONFIG.BASE_URL}${endpoint}`;
     const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
       Accept: 'application/json',
       ...(options.headers as Record<string, string>),
     };
 
-    if (this.token) {
+    if (options.body && !headers['Content-Type']) {
+      headers['Content-Type'] = 'application/json';
+    }
+
+    const isPublicAuthEndpoint =
+      endpoint.includes('/auth/login') ||
+      endpoint.includes('/auth/refresh') ||
+      endpoint.includes('/auth/register') ||
+      endpoint.includes('/auth/otp') ||
+      endpoint.includes('/auth/password-reset');
+
+    if (this.token && !isPublicAuthEndpoint) {
       headers['Authorization'] = `Bearer ${this.token}`;
     }
 
@@ -39,11 +109,44 @@ class ApiClient {
       const json = await response.json().catch(() => ({}));
 
       if (!response.ok) {
+        const validationDetailMsg =
+          Array.isArray(json.error?.details) && json.error.details.length > 0
+            ? json.error.details[0]?.message
+            : null;
+
         const errorMsg =
+          validationDetailMsg ||
           (typeof json.error === 'object' && json.error?.message) ||
           json.message ||
           (typeof json.error === 'string' ? json.error : null) ||
           `HTTP ${response.status}: Request failed`;
+
+        const isAuthError =
+          response.status === 401 ||
+          (typeof errorMsg === 'string' &&
+            (errorMsg.toLowerCase().includes('expired') ||
+              errorMsg.toLowerCase().includes('token')));
+
+        // Automatically refresh expired token and transparently retry the request once
+        if (
+          isAuthError &&
+          !options._isRetry &&
+          !endpoint.includes('/auth/login') &&
+          !endpoint.includes('/auth/refresh')
+        ) {
+          const freshToken = await this.refreshAccessToken();
+          if (freshToken) {
+            return this.request<T>(endpoint, {
+              ...options,
+              _isRetry: true,
+            });
+          }
+        }
+
+        if (response.status === 401) {
+          this.token = null;
+        }
+
         throw new Error(errorMsg);
       }
 

@@ -374,33 +374,37 @@ class PassengerService {
    * Fetch passenger's authoritative digital bookings (/api/v1/bookings/my-bookings)
    */
   async getTickets(): Promise<PassengerTicket[]> {
-    const res = await apiClient.get<{ bookings?: any[]; totalCount?: number }>(API_CONFIG.ENDPOINTS.MY_BOOKINGS);
-    if (res && res.data && Array.isArray(res.data.bookings)) {
-      return res.data.bookings.map((b: any) => ({
-        id: b.ticketId || b.id,
-        pnr: `RB-${(b.id || '').substring(0, 8).toUpperCase()}`,
-        tripId: b.tripId,
-        routeCode: b.routeCode || 'OD-ROUTE',
-        routeName: `${b.origin || 'Origin'} to ${b.destination || 'Destination'}`,
-        busRegistration: b.busRegistrationNumber || 'OD-BUS',
-        operatorName: b.operatorName || 'Rural Transit Operator',
-        origin: b.origin || 'Origin',
-        destination: b.destination || 'Destination',
-        departureTime: b.departureTime ? new Date(b.departureTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--',
-        arrivalTime: '--',
-        journeyDate: b.departureTime ? new Date(b.departureTime).toLocaleDateString('en-GB') : new Date().toLocaleDateString('en-GB'),
-        seatNumbers: [String(b.seatNumber)],
-        totalFare: b.fareAmount || 0,
-        passengerName: 'Passenger',
-        passengerPhone: '',
-        status: (b.status === 'CONFIRMED' || b.status === 'BOARDED' || b.status === 'CANCELLED') ? b.status : 'CONFIRMED',
-        paymentMethod: 'UPI' as const,
-        qrPayload: b.qrSignature || JSON.stringify({ bookingId: b.id, ticketId: b.ticketId, tripId: b.tripId, seat: b.seatNumber }),
-        signature: b.qrSignature || `SIG:${b.id}`,
-        bookedAt: b.createdAt || new Date().toISOString(),
-      }));
+    try {
+      const res = await apiClient.get<{ bookings?: any[]; totalCount?: number }>(API_CONFIG.ENDPOINTS.MY_BOOKINGS);
+      if (res && res.data && Array.isArray(res.data.bookings)) {
+        return res.data.bookings.map((b: any) => ({
+          id: b.ticketId || b.id,
+          pnr: `RB-${(b.id || '').substring(0, 8).toUpperCase()}`,
+          tripId: b.tripId,
+          routeCode: b.routeCode || 'OD-ROUTE',
+          routeName: `${b.origin || 'Origin'} to ${b.destination || 'Destination'}`,
+          busRegistration: b.busRegistrationNumber || 'OD-BUS',
+          operatorName: b.operatorName || 'Rural Transit Operator',
+          origin: b.origin || 'Origin',
+          destination: b.destination || 'Destination',
+          departureTime: b.departureTime ? new Date(b.departureTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--',
+          arrivalTime: '--',
+          journeyDate: b.departureTime ? new Date(b.departureTime).toLocaleDateString('en-GB') : new Date().toLocaleDateString('en-GB'),
+          seatNumbers: [String(b.seatNumber)],
+          totalFare: b.fareAmount || 0,
+          passengerName: 'Passenger',
+          passengerPhone: '',
+          status: (b.status === 'CONFIRMED' || b.status === 'BOARDED' || b.status === 'CANCELLED') ? b.status : 'CONFIRMED',
+          paymentMethod: 'UPI' as const,
+          qrPayload: b.qrSignature || JSON.stringify({ bookingId: b.id, ticketId: b.ticketId, tripId: b.tripId, seat: b.seatNumber }),
+          signature: b.qrSignature || `SIG:${b.id}`,
+          bookedAt: b.createdAt || new Date().toISOString(),
+        }));
+      }
+      return [];
+    } catch {
+      return [];
     }
-    return [];
   }
 
   /**

@@ -1,16 +1,27 @@
-{
+﻿{
   "name": "ruralbus-rn",
   "version": "0.1.0",
   "private": true,
-  "description": "RuralBus Frontend - Standalone React Native + React Native Web UI Migration Workspace",
+  "description": "RuralBus – React Native app + self-contained Fastify backend monorepo",
+  "packageManager": "pnpm@10.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "react-native start",
-    "android": "react-native run-android",
-    "ios": "react-native run-ios",
-    "web": "react-native start",
+    "start": "expo start",
+    "dev": "expo start --web",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web",
     "typecheck": "tsc --noEmit",
-    "test": "npx tsx --test tests/**/*.test.ts"
+    "test": "npx tsx --test tests/**/*.test.ts",
+    "api:dev": "pnpm --filter @ruralbus/api dev",
+    "api:build": "pnpm --filter @ruralbus/api build",
+    "api:test": "pnpm --filter @ruralbus/api test",
+    "db:migrate": "pnpm --filter @ruralbus/database db:migrate",
+    "db:seed": "pnpm --filter @ruralbus/database db:seed",
+    "db:setup": "pnpm --filter @ruralbus/database setup:demo",
+    "db:reset": "pnpm --filter @ruralbus/database db:reset",
+    "db:studio": "pnpm --filter @ruralbus/database db:studio",
+    "build:packages": "pnpm --filter @ruralbus/shared-config --filter @ruralbus/shared-types --filter @ruralbus/shared-validators --filter @ruralbus/database build"
   },
   "dependencies": {
     "@react-navigation/native": "^7.0.14",
@@ -22,7 +33,8 @@
     "zustand": "^5.0.3"
   },
   "devDependencies": {
-    "@types/node": "^26.6.2",
+    "@react-native-community/cli": "^20.2.0",
+    "@types/node": "^22.13.5",
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
     "typescript": "^5.7.3"

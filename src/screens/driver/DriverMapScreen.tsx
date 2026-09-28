@@ -5,6 +5,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
+  Platform,
 } from 'react-native';
 import { Card, Badge, Button } from '../../components/common';
 import { useTheme } from '../../theme';
@@ -406,11 +407,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#020617',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#00D488',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.4,
-    shadowRadius: 16,
-    elevation: 8,
+    ...(Platform.OS === 'web'
+      ? { boxShadow: '0 0 16px rgba(0, 212, 136, 0.4)' }
+      : {
+          shadowColor: '#00D488',
+          shadowOffset: { width: 0, height: 0 },
+          shadowOpacity: 0.4,
+          shadowRadius: 16,
+          elevation: 8,
+        }),
   },
   speedLargeValue: {
     fontSize: 56,

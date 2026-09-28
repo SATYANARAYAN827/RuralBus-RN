@@ -58,7 +58,7 @@ export const EditOperatorModal: React.FC<Props> = ({ isOpen, onClose, operator }
       onClose={onClose}
       title="Edit Operator"
       subtitle={operator.businessCode}
-      icon="??"
+      icon="✏️"
       actions={
         <>
           <Button title="Cancel" variant="outline" size="md" onPress={onClose} />
@@ -74,7 +74,7 @@ export const EditOperatorModal: React.FC<Props> = ({ isOpen, onClose, operator }
     >
       {error ? (
         <View style={styles.errorBox}>
-          <Text style={styles.errorText}>?? {error}</Text>
+          <Text style={styles.errorText}>⚠️ {error}</Text>
         </View>
       ) : null}
 

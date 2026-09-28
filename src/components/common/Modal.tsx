@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import {
   Modal as RNModal,
   View,
@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   ViewStyle,
-  TouchableWithoutFeedback,
   ScrollView,
 } from 'react-native';
 import { useTheme } from '../../theme';
@@ -51,94 +50,95 @@ export const Modal: React.FC<ModalProps> = ({
       animationType="fade"
       onRequestClose={onClose}
     >
-      <TouchableWithoutFeedback onPress={onClose}>
+      <View
+        style={[
+          styles.backdrop,
+          {
+            backgroundColor: 'rgba(0, 0, 0, 0.75)',
+            justifyContent: isMobile ? 'flex-end' : 'center',
+          },
+        ]}
+      >
+        <TouchableOpacity
+          style={StyleSheet.absoluteFillObject}
+          activeOpacity={1}
+          onPress={onClose}
+        />
         <View
           style={[
-            styles.backdrop,
+            styles.modalCard,
             {
-              backgroundColor: 'rgba(0, 0, 0, 0.75)',
-              justifyContent: isMobile ? 'flex-end' : 'center',
+              backgroundColor: colors.modalBackground,
+              borderColor: colors.modalBorder,
+              maxWidth: isMobile ? '100%' : maxWidth,
+              borderTopLeftRadius: borderRadius.modal,
+              borderTopRightRadius: borderRadius.modal,
+              borderBottomLeftRadius: isMobile ? 0 : borderRadius.modal,
+              borderBottomRightRadius: isMobile ? 0 : borderRadius.modal,
+              maxHeight: isMobile ? '90%' : '85%',
+              ...(isLight ? shadows.modal : shadows.elevated),
             },
+            style,
           ]}
         >
-          <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
-            <View
-              style={[
-                styles.modalCard,
-                {
-                  backgroundColor: colors.modalBackground,
-                  borderColor: colors.modalBorder,
-                  maxWidth: isMobile ? '100%' : maxWidth,
-                  borderTopLeftRadius: borderRadius.modal,
-                  borderTopRightRadius: borderRadius.modal,
-                  borderBottomLeftRadius: isMobile ? 0 : borderRadius.modal,
-                  borderBottomRightRadius: isMobile ? 0 : borderRadius.modal,
-                  maxHeight: isMobile ? '90%' : '85%',
-                  ...(isLight ? shadows.modal : shadows.elevated),
-                },
-                style,
-              ]}
-            >
-              {/* Header */}
-              <View style={styles.modalHeader}>
-                <View style={styles.headerLeft}>
-                  {icon && (
-                    <View
-                      style={[
-                        styles.iconContainer,
-                        {
-                          backgroundColor: iconBg || (isLight ? '#ecfdf5' : 'rgba(0, 212, 136, 0.15)'),
-                          borderColor: iconColor || '#00D488',
-                        },
-                      ]}
-                    >
-                      <Text style={[styles.iconText, { color: iconColor || '#00D488' }]}>{icon}</Text>
-                    </View>
-                  )}
-                  <View style={{ flex: 1 }}>
-                    {title && (
-                      <Text style={[styles.title, { color: colors.textPrimary }]}>
-                        {title}
-                      </Text>
-                    )}
-                    {subtitle && (
-                      <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-                        {subtitle}
-                      </Text>
-                    )}
-                  </View>
-                </View>
-
-                <TouchableOpacity
-                  onPress={onClose}
+          {/* Header */}
+          <View style={styles.modalHeader}>
+            <View style={styles.headerLeft}>
+              {icon && (
+                <View
                   style={[
-                    styles.closeButton,
+                    styles.iconContainer,
                     {
-                      backgroundColor: isLight ? '#f1f5f9' : 'rgba(255, 255, 255, 0.08)',
-                      borderColor: isLight ? '#cbd5e1' : 'rgba(255, 255, 255, 0.15)',
+                      backgroundColor: iconBg || (isLight ? '#ecfdf5' : 'rgba(0, 212, 136, 0.15)'),
+                      borderColor: iconColor || '#00D488',
                     },
                   ]}
-                  activeOpacity={0.7}
                 >
-                  <Text style={[styles.closeIcon, { color: colors.textPrimary }]}>✕</Text>
-                </TouchableOpacity>
+                  <Text style={[styles.iconText, { color: iconColor || '#00D488' }]}>{icon}</Text>
+                </View>
+              )}
+              <View style={{ flex: 1 }}>
+                {title && (
+                  <Text style={[styles.title, { color: colors.textPrimary }]}>
+                    {title}
+                  </Text>
+                )}
+                {subtitle && (
+                  <Text style={[styles.subtitle, { color: colors.textMuted }]}>
+                    {subtitle}
+                  </Text>
+                )}
               </View>
-
-              {/* Body */}
-              <ScrollView
-                style={styles.modalBody}
-                contentContainerStyle={{ paddingBottom: spacing.default }}
-                showsVerticalScrollIndicator={false}
-              >
-                {children}
-              </ScrollView>
-
-              {/* Footer Actions */}
-              {actions && <View style={styles.modalFooter}>{actions}</View>}
             </View>
-          </TouchableWithoutFeedback>
+
+            <TouchableOpacity
+              onPress={onClose}
+              style={[
+                styles.closeButton,
+                {
+                  backgroundColor: isLight ? '#f1f5f9' : 'rgba(255, 255, 255, 0.08)',
+                  borderColor: isLight ? '#cbd5e1' : 'rgba(255, 255, 255, 0.15)',
+                },
+              ]}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.closeIcon, { color: colors.textPrimary }]}>✕</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Body */}
+          <ScrollView
+            style={styles.modalBody}
+            contentContainerStyle={{ paddingBottom: spacing.default }}
+            showsVerticalScrollIndicator={false}
+          >
+            {children}
+          </ScrollView>
+
+          {/* Footer Actions */}
+          {actions && <View style={styles.modalFooter}>{actions}</View>}
         </View>
-      </TouchableWithoutFeedback>
+      </View>
     </RNModal>
   );
 };

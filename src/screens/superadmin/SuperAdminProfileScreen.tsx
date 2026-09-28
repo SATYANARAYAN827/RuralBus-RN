@@ -58,7 +58,7 @@ export const SuperAdminProfileScreen: React.FC = () => {
           </View>
           <View style={{ flex: 1 }}>
             <Text style={[styles.name, { color: colors.textPrimary }]}>
-              {displayProfile?.fullName || '�'}
+              {displayProfile?.fullName || '—'}
             </Text>
             <Text style={[styles.role, { color: '#a855f7' }]}>Platform Administrator</Text>
           </View>
@@ -66,8 +66,8 @@ export const SuperAdminProfileScreen: React.FC = () => {
 
         <View style={styles.divider} />
 
-        <ProfileField label="Phone" value={displayProfile?.phone || '�'} />
-        <ProfileField label="Email" value={displayProfile?.email || '�'} />
+        <ProfileField label="Phone" value={displayProfile?.phone || '—'} />
+        <ProfileField label="Email" value={displayProfile?.email || '—'} />
         <ProfileField label="Account Status" value={displayProfile?.isActive ? 'Active' : 'Suspended'} />
         {profile?.lastLoginAt && (
           <ProfileField
@@ -92,7 +92,7 @@ export const SuperAdminProfileScreen: React.FC = () => {
           title="Log Out from Super Admin Console"
           variant="danger"
           size="md"
-          icon="??"
+          icon="👤"
           onPress={handleLogout}
           style={{ marginTop: 12 }}
         />

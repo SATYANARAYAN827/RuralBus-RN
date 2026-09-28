@@ -9,7 +9,9 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-nati
 import { Modal, Button, TextInput } from '../../../components/common';
 import { useTheme } from '../../../theme';
 import { useOperatorStore } from '../../../stores/operator.store';
+import { useNotificationStore } from '../../../stores/notification.store';
 import { BusSeatingType } from '../../../types/operator.types';
+import { BusPendingApprovalModal } from './BusPendingApprovalModal';
 
 export const AddBusModal: React.FC = () => {
   const { colors, isLight } = useTheme();
@@ -21,6 +23,14 @@ export const AddBusModal: React.FC = () => {
   const [seatingType, setSeatingType] = useState<BusSeatingType>('SEATER_2X2');
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>(['AC', 'CCTV']);
   const [formError, setFormError] = useState<string | null>(null);
+
+  // Post-submit pending approval confirmation modal
+  const [isPendingModalOpen, setIsPendingModalOpen] = useState(false);
+  const [pendingConfirmation, setPendingConfirmation] = useState<{
+    busReg?: string;
+    busModel: string;
+    totalSeats: number;
+  } | null>(null);
 
   const availableAmenities = ['AC', 'WiFi', 'CCTV', 'USB Charging', 'Water Bottle', 'First Aid'];
 
@@ -50,15 +60,37 @@ export const AddBusModal: React.FC = () => {
       return;
     }
 
+    const reg = regNumber.trim().toUpperCase() || undefined;
+    const busModelName = model.trim();
+
     const success = await registerBus({
-      registrationNumber: regNumber.trim().toUpperCase() || undefined,
-      model: model.trim(),
+      registrationNumber: reg,
+      model: busModelName,
       totalSeats: seats,
       seatingType,
       amenities: selectedAmenities,
     });
 
     if (success) {
+      // 1. Dispatch platform approval request to Super Admin
+      useNotificationStore.getState().addNotification({
+        type: 'BUS_APPROVAL_REQUEST',
+        title: 'New Bus Registration Request',
+        message: `An operator submitted bus ${reg || busModelName} (${seats} seats) for platform verification.`,
+        targetRole: 'PLATFORM_ADMIN',
+        busReg: reg,
+        busModel: busModelName,
+      });
+
+      // 2. Open confirmation pop-up explaining that it is pending approval
+      setPendingConfirmation({
+        busReg: reg,
+        busModel: busModelName,
+        totalSeats: seats,
+      });
+      setIsPendingModalOpen(true);
+
+      // 3. Reset form and close registration modal
       setRegNumber('');
       setModel('');
       setTotalSeats('40');
@@ -67,12 +99,13 @@ export const AddBusModal: React.FC = () => {
   };
 
   return (
-    <Modal
-      isOpen={isAddBusModalOpen}
-      onClose={() => setIsAddBusModalOpen(false)}
-      title="Register New Fleet Bus"
-      subtitle="Submit bus for fleet operation and platform verification"
-      icon="🚌"
+    <>
+      <Modal
+        isOpen={isAddBusModalOpen}
+        onClose={() => setIsAddBusModalOpen(false)}
+        title="Register New Fleet Bus"
+        subtitle="Submit bus for fleet operation and platform verification"
+        icon="🚌"
       actions={
         <>
           <Button
@@ -201,6 +234,20 @@ export const AddBusModal: React.FC = () => {
         </View>
       </ScrollView>
     </Modal>
+
+    {pendingConfirmation && (
+      <BusPendingApprovalModal
+        isOpen={isPendingModalOpen}
+        onClose={() => {
+          setIsPendingModalOpen(false);
+          setPendingConfirmation(null);
+        }}
+        busReg={pendingConfirmation.busReg}
+        busModel={pendingConfirmation.busModel}
+        totalSeats={pendingConfirmation.totalSeats}
+      />
+    )}
+  </>
   );
 };
 

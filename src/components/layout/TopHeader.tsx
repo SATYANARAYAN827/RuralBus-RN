@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -65,7 +65,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
     >
       {/* Left: Mobile Nav Button + Brand & Portal Info */}
       <View style={styles.leftSection}>
-        {isMobile && onToggleMobileNav && (
+        {isMobile && onToggleMobileNav && roleBadge !== 'PASSENGER' && (
           <TouchableOpacity
             onPress={onToggleMobileNav}
             accessibilityLabel={isMobileNavOpen ? 'Close navigation menu' : 'Open navigation menu'}
@@ -254,6 +254,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
     flex: 1,
+    minWidth: 0,
   },
   mobileNavToggle: {
     paddingVertical: 6,
@@ -262,6 +263,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
   },
   mobileNavToggleText: {
     fontSize: 16,
@@ -271,6 +273,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    flex: 1,
+    minWidth: 0,
   },
   iconBox: {
     width: 32,
@@ -279,17 +283,21 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
   },
   iconText: {
     fontSize: 15,
   },
   titleColumn: {
     justifyContent: 'center',
+    flex: 1,
+    minWidth: 0,
   },
   wordmarkRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+    flexWrap: 'wrap',
   },
   brandText: {
     fontSize: 16,

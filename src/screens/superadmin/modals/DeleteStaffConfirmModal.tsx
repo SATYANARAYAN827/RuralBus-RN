@@ -26,7 +26,7 @@ export const DeleteStaffConfirmModal: React.FC<Props> = ({
       onClose={onClose}
       title="Remove Staff Member"
       subtitle="This action is irreversible"
-      icon="??"
+      icon="🗑️"
       actions={
         <>
           <Button title="Cancel" variant="outline" size="md" onPress={onClose} />
@@ -47,7 +47,7 @@ export const DeleteStaffConfirmModal: React.FC<Props> = ({
       </Text>
       {staffError ? (
         <View style={styles.errorBox}>
-          <Text style={styles.errorText}>?? {staffError}</Text>
+          <Text style={styles.errorText}>⚠️ {staffError}</Text>
         </View>
       ) : null}
     </Modal>

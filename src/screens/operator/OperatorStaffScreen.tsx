@@ -38,6 +38,9 @@ export const OperatorStaffScreen: React.FC = () => {
     isLoadingStaff,
     staffError,
     fetchStaff,
+    buses,
+    fetchBuses,
+    assignStaffToBus,
     updateStaffStatus,
     setIsAddStaffModalOpen,
     setIsEditStaffModalOpen,
@@ -48,7 +51,8 @@ export const OperatorStaffScreen: React.FC = () => {
 
   useEffect(() => {
     fetchStaff();
-  }, [fetchStaff]);
+    fetchBuses();
+  }, [fetchStaff, fetchBuses]);
 
   const filteredStaff = staff.filter((s) => {
     if (staffRoleFilter !== 'ALL' && s.role !== staffRoleFilter) return false;
@@ -164,85 +168,133 @@ export const OperatorStaffScreen: React.FC = () => {
 
       {/* 4. Staff Cards List */}
       <View style={styles.staffListGrid}>
-        {filteredStaff.map((member) => (
-          <Card
-            key={member.id}
-            padding={16}
-            style={[
-              styles.staffCard,
-              {
-                backgroundColor: isLight ? '#ffffff' : 'rgba(255, 255, 255, 0.03)',
-                borderColor: isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255, 255, 255, 0.08)',
-              },
-            ]}
-          >
-            <View style={styles.staffCardHeader}>
-              <View style={{ flex: 1 }}>
-                <View style={styles.badgeRow}>
-                  <Badge
-                    label={member.role}
-                    variant={member.role === 'DRIVER' ? 'mint' : 'info'}
+        {filteredStaff.map((member) => {
+          const assignedBus =
+            buses.find((b) => b.id === member.busId) ||
+            buses.find((b) => b.registrationNumber === member.busRegistrationNumber) ||
+            buses.find(
+              (b) =>
+                b.driverId === member.id ||
+                b.driverId === member.userId ||
+                b.conductorId === member.id ||
+                b.conductorId === member.userId
+            );
+
+          const isAssigned = Boolean(member.busId || member.busRegistrationNumber || assignedBus);
+          const busDisplay = assignedBus
+            ? `🚌 ${assignedBus.registrationNumber} (${assignedBus.model})`
+            : member.busRegistrationNumber
+            ? `🚌 ${member.busRegistrationNumber}`
+            : null;
+
+          return (
+            <Card
+              key={member.id}
+              padding={16}
+              style={[
+                styles.staffCard,
+                {
+                  backgroundColor: isLight ? '#ffffff' : 'rgba(255, 255, 255, 0.03)',
+                  borderColor: isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255, 255, 255, 0.08)',
+                },
+              ]}
+            >
+              <View style={styles.staffCardHeader}>
+                <View style={{ flex: 1 }}>
+                  <View style={styles.badgeRow}>
+                    <Badge
+                      label={member.role}
+                      variant={member.role === 'DRIVER' ? 'mint' : 'info'}
+                      size="sm"
+                    />
+                    <Badge
+                      label={member.isActive ? 'ACTIVE' : 'SUSPENDED'}
+                      variant={member.isActive ? 'mint' : 'neutral'}
+                      size="sm"
+                    />
+                  </View>
+                  <Text style={[styles.staffName, { color: colors.textPrimary }]}>
+                    {member.role === 'DRIVER' ? '👨‍✈️ ' : '🎫 '}
+                    {member.fullName}
+                  </Text>
+                  <Text style={[styles.staffPhone, { color: colors.textSecondary }]}>
+                    📞 {member.phone} {member.email ? `• ✉️ ${member.email}` : ''}
+                  </Text>
+                </View>
+
+                <View style={styles.cardActions}>
+                  <Button
+                    title={member.isActive ? 'Suspend' : 'Activate'}
+                    variant="outline"
                     size="sm"
-                  />
-                  <Badge
-                    label={member.isActive ? 'ACTIVE' : 'SUSPENDED'}
-                    variant={member.isActive ? 'mint' : 'neutral'}
-                    size="sm"
+                    onPress={() => updateStaffStatus(member.id, !member.isActive)}
                   />
                 </View>
-                <Text style={[styles.staffName, { color: colors.textPrimary }]}>
-                  {member.role === 'DRIVER' ? '👨‍✈️ ' : '🎫 '}
-                  {member.fullName}
-                </Text>
-                <Text style={[styles.staffPhone, { color: colors.textSecondary }]}>
-                  📞 {member.phone} {member.email ? `• ✉️ ${member.email}` : ''}
-                </Text>
               </View>
 
-              <View style={styles.cardActions}>
-                <Button
-                  title={member.isActive ? 'Suspend' : 'Activate'}
-                  variant="outline"
-                  size="sm"
-                  onPress={() => updateStaffStatus(member.id, !member.isActive)}
-                />
-              </View>
-            </View>
+              {/* Bus Assignment Row */}
+              <View style={styles.assignmentRow}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.assignLabel}>ASSIGNED VEHICLE</Text>
+                  <Text
+                    style={[
+                      styles.assignValue,
+                      {
+                        color: isAssigned
+                          ? isLight
+                            ? '#047857'
+                            : '#00D488'
+                          : colors.textMuted,
+                        fontWeight: isAssigned ? '800' : '600',
+                      },
+                    ]}
+                  >
+                    {busDisplay || 'Unassigned (Standby Pool)'}
+                  </Text>
+                </View>
 
-            {/* Bus Assignment Row */}
-            <View style={styles.assignmentRow}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.assignLabel}>ASSIGNED VEHICLE</Text>
-                <Text style={[styles.assignValue, { color: colors.textPrimary }]}>
-                  {member.busRegistrationNumber
-                    ? `🚌 ${member.busRegistrationNumber}`
-                    : 'Unassigned (Standby Pool)'}
-                </Text>
+                <View style={styles.actionButtonsRow}>
+                  {isAssigned ? (
+                    <Button
+                      title="✕ Unassign"
+                      variant="danger"
+                      size="sm"
+                      onPress={() => assignStaffToBus(member.id, null)}
+                    />
+                  ) : (
+                    <Button
+                      title="Assign Bus"
+                      variant="mint"
+                      size="sm"
+                      onPress={() => {
+                        setEditingStaff(member);
+                        setIsEditStaffModalOpen(true);
+                      }}
+                    />
+                  )}
+                  <Button
+                    title="🔑 Reset"
+                    variant="outline"
+                    size="sm"
+                    onPress={() => {
+                      setResetPasswordStaff(member);
+                      setIsResetPasswordModalOpen(true);
+                    }}
+                  />
+                  <Button
+                    title="Edit"
+                    variant="outline"
+                    size="sm"
+                    onPress={() => {
+                      setEditingStaff(member);
+                      setIsEditStaffModalOpen(true);
+                    }}
+                  />
+                </View>
               </View>
-
-              <View style={styles.actionButtonsRow}>
-                <Button
-                  title="🔑 Reset Password"
-                  variant="outline"
-                  size="sm"
-                  onPress={() => {
-                    setResetPasswordStaff(member);
-                    setIsResetPasswordModalOpen(true);
-                  }}
-                />
-                <Button
-                  title="Edit / Assign"
-                  variant="outline"
-                  size="sm"
-                  onPress={() => {
-                    setEditingStaff(member);
-                    setIsEditStaffModalOpen(true);
-                  }}
-                />
-              </View>
-            </View>
-          </Card>
-        ))}
+            </Card>
+          );
+        })}
       </View>
     </ScrollView>
   );

@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import {
   View,
   StyleSheet,
@@ -14,6 +14,7 @@ import { DesktopSidebar } from './DesktopSidebar';
 import { MobileDrawer } from './MobileDrawer';
 import { BottomNav } from './BottomNav';
 import { NavItem, UserProfile } from '../../types';
+import { useAuthStore } from '../../stores/auth.store';
 
 export interface ResponsiveShellProps {
   children: React.ReactNode;
@@ -66,6 +67,8 @@ export const ResponsiveShell: React.FC<ResponsiveShellProps> = ({
 }) => {
   const { isLight, colors } = useTheme();
   const { isMobile } = useResponsive();
+  const authStore = useAuthStore();
+  const effectiveUser = authStore.user || user;
 
   const activeBottomItems = bottomNavItems || navItems.slice(0, 4);
 
@@ -92,13 +95,13 @@ export const ResponsiveShell: React.FC<ResponsiveShellProps> = ({
             portalSubtitle={portalSubtitle}
             icon={icon}
             roleBadgeColor={roleBadgeColor}
-            user={user}
+            user={effectiveUser}
             onLogout={onLogout}
           />
         )}
 
-        {/* Mobile Sliding Drawer (Rendered as Modal Overlay on < 768px) */}
-        {isMobile && (
+        {/* Mobile Sliding Drawer (Rendered as Modal Overlay on < 768px for non-passenger roles) */}
+        {isMobile && roleBadge !== 'PASSENGER' && (
           <MobileDrawer
             isOpen={isMobileNavOpen}
             onClose={onCloseMobileNav}
@@ -109,7 +112,7 @@ export const ResponsiveShell: React.FC<ResponsiveShellProps> = ({
             portalSubtitle={portalSubtitle}
             icon={icon}
             roleBadgeColor={roleBadgeColor}
-            user={user}
+            user={effectiveUser}
             onLogout={onLogout}
           />
         )}
@@ -126,10 +129,11 @@ export const ResponsiveShell: React.FC<ResponsiveShellProps> = ({
             portalSubtitle={portalSubtitle}
             activeViewTitle={activeViewTitle}
             isMobileNavOpen={isMobileNavOpen}
-            onToggleMobileNav={onToggleMobileNav}
-            unreadNotifsCount={unreadNotifsCount}
-            onOpenNotifs={onOpenNotifs}
+            onToggleMobileNav={roleBadge === 'PASSENGER' ? undefined : onToggleMobileNav}
+            unreadNotifsCount={roleBadge === 'PASSENGER' ? undefined : unreadNotifsCount}
+            onOpenNotifs={roleBadge === 'PASSENGER' ? undefined : onOpenNotifs}
             extraActions={extraHeaderActions}
+            hideThemeToggle={roleBadge === 'PASSENGER'}
           />
 
           {/* Content Area */}
@@ -155,7 +159,7 @@ export const ResponsiveShell: React.FC<ResponsiveShellProps> = ({
               <View
                 style={[
                   styles.nonScrollContent,
-                  { padding: isMobile ? 14 : 24 },
+                  { padding: roleBadge === 'PASSENGER' ? 0 : isMobile ? 14 : 24 },
                   contentStyle,
                 ]}
               >

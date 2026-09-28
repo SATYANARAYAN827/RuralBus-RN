@@ -27,6 +27,12 @@ export interface FleetBus {
   amenities: string[];
   createdBy?: string;
   operatorName?: string;
+  driverId?: string | null;
+  conductorId?: string | null;
+  driverName?: string | null;
+  conductorName?: string | null;
+  driver?: any;
+  conductor?: any;
   assignedDriver?: FleetBusStaffRef | null;
   assignedConductor?: FleetBusStaffRef | null;
   createdAt?: string;

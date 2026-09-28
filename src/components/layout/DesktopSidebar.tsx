@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,8 @@ import {
 } from 'react-native';
 import { useTheme } from '../../theme';
 import { NavItem, UserProfile } from '../../types';
+import { useAuthStore } from '../../stores/auth.store';
+import { useSuperAdminStore } from '../../stores/superadmin.store';
 
 export interface DesktopSidebarProps {
   items: NavItem[];
@@ -32,22 +34,36 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
   user,
   onLogout,
 }) => {
-  const { colors, isLight, borderRadius, spacing } = useTheme();
+  const { colors, isLight } = useTheme();
+  const authStore = useAuthStore();
+  const effectiveUser = authStore.user || user;
 
-  const isSuperAdmin = user?.role === 'PLATFORM_ADMIN';
+  const isSuperAdmin = effectiveUser?.role === 'PLATFORM_ADMIN';
+  const superAdminBuses = useSuperAdminStore((s) => s.buses);
+  const pendingBusesCount = isSuperAdmin
+    ? superAdminBuses.filter((b) => b.status === 'PENDING_APPROVAL').length
+    : 0;
   const sidebarBg = isSuperAdmin ? '#050a0f' : colors.sidebarBackground;
   const sidebarBorder = isSuperAdmin ? 'rgba(255, 255, 255, 0.10)' : colors.sidebarBorder;
   const isDarkShell = isSuperAdmin || !isLight;
 
   let lastGroup = '';
 
-  const initials = user?.fullName
-    ? user.fullName
-        .split(' ')
+  const isPassenger = effectiveUser?.role === 'PASSENGER' || portalTitle.includes('Passenger');
+  const initials = isSuperAdmin
+    ? 'SA'
+    : isPassenger
+    ? 'PA'
+    : effectiveUser?.fullName
+    ? effectiveUser.fullName
+        .trim()
+        .split(/\s+/)
         .map((p) => p[0])
         .slice(0, 2)
         .join('')
         .toUpperCase()
+    : effectiveUser?.phone
+    ? effectiveUser.phone.slice(-2)
     : 'RB';
 
   return (
@@ -80,12 +96,14 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
         >
           <Text style={styles.iconText}>{icon}</Text>
         </View>
-        <View>
+        <View style={styles.brandTextContainer}>
           <Text
             style={[
               styles.brandTitle,
               { color: isDarkShell ? '#ffffff' : '#0f172a' },
             ]}
+            numberOfLines={1}
+            ellipsizeMode="tail"
           >
             RURAL
             <Text style={{ color: roleBadgeColor }}>BUS</Text>
@@ -93,13 +111,45 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
           <Text
             style={[
               styles.brandSubtitle,
-              { color: roleBadgeColor },
+              { color: isSuperAdmin ? '#d946ef' : roleBadgeColor },
             ]}
+            numberOfLines={1}
+            ellipsizeMode="tail"
           >
-            {portalSubtitle || portalTitle}
+            {isSuperAdmin
+              ? 'Super Admin Console'
+              : isPassenger
+              ? 'Passenger App'
+              : portalSubtitle || portalTitle}
           </Text>
         </View>
       </View>
+
+      {/* Super Admin Audit Logs Alert Pill */}
+      {isSuperAdmin && (
+        <TouchableOpacity
+          onPress={() => onSelectTab('REQUESTS')}
+          activeOpacity={0.8}
+          style={styles.auditLogsBtn}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Text style={{ fontSize: 13 }}>🔔</Text>
+            <Text style={styles.auditLogsText}>Owner Audit Logs</Text>
+          </View>
+          <View
+            style={[
+              styles.auditLogsBadge,
+              {
+                backgroundColor: pendingBusesCount > 0 ? '#f59e0b' : 'rgba(255, 255, 255, 0.1)',
+              },
+            ]}
+          >
+            <Text style={styles.auditLogsBadgeText}>
+              {pendingBusesCount > 0 ? `${pendingBusesCount} PENDING` : 'CLEARED'}
+            </Text>
+          </View>
+        </TouchableOpacity>
+      )}
 
       {/* Navigation Links */}
       <ScrollView
@@ -132,7 +182,9 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
                   styles.navItem,
                   {
                     backgroundColor: isActive
-                      ? isDarkShell
+                      ? isSuperAdmin
+                        ? 'rgba(168, 85, 247, 0.15)'
+                        : isDarkShell
                         ? 'rgba(0, 212, 136, 0.12)'
                         : '#ecfdf5'
                       : 'transparent',
@@ -149,7 +201,9 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
                       styles.navLabel,
                       {
                         color: isActive
-                          ? isDarkShell
+                          ? isSuperAdmin
+                            ? '#c084fc'
+                            : isDarkShell
                             ? roleBadgeColor
                             : '#047857'
                           : isDarkShell
@@ -163,14 +217,16 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
                   </Text>
                 </View>
 
-                {item.badge && (
+                {Boolean(item.badge) && (
                   <View
                     style={[
                       styles.navBadge,
                       {
                         backgroundColor:
                           item.badgeBg ||
-                          (isActive
+                          (isSuperAdmin
+                            ? 'rgba(255, 255, 255, 0.10)'
+                            : isActive
                             ? isDarkShell
                               ? 'rgba(0, 212, 136, 0.25)'
                               : '#dcfce7'
@@ -186,7 +242,9 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
                         {
                           color:
                             item.badgeColor ||
-                            (isActive
+                            (isSuperAdmin
+                              ? '#ffffff'
+                              : isActive
                               ? isDarkShell
                                 ? '#00D488'
                                 : '#15803d'
@@ -240,7 +298,7 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
               ]}
               numberOfLines={1}
             >
-              {user?.fullName || 'Transit Staff'}
+              {effectiveUser?.fullName || (isPassenger ? 'Passenger' : 'Transit Staff')}
             </Text>
             <Text
               style={[
@@ -249,7 +307,9 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
               ]}
               numberOfLines={1}
             >
-              {user?.phone || user?.role || 'RuralBus'}
+              {isSuperAdmin
+                ? 'Full System Oversight'
+                : effectiveUser?.phone || (isPassenger ? '7381319957' : effectiveUser?.role || 'RuralBus')}
             </Text>
           </View>
         </View>
@@ -297,9 +357,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    paddingBottom: 20,
+    paddingBottom: 16,
     marginBottom: 8,
     borderBottomWidth: 1.5,
+    minWidth: 0,
+  },
+  brandTextContainer: {
+    flex: 1,
+    minWidth: 0,
   },
   iconBox: {
     width: 42,
@@ -322,6 +387,34 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 0.5,
     marginTop: 1,
+  },
+  auditLogsBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 9,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    backgroundColor: 'rgba(245, 158, 11, 0.10)',
+    borderWidth: 1,
+    borderColor: 'rgba(245, 158, 11, 0.3)',
+    marginBottom: 12,
+  },
+  auditLogsText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#f59e0b',
+  },
+  auditLogsBadge: {
+    backgroundColor: '#f59e0b',
+    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+  },
+  auditLogsBadgeText: {
+    color: '#000000',
+    fontSize: 10,
+    fontWeight: '900',
   },
   groupHeading: {
     fontSize: 10,
@@ -379,6 +472,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
     marginBottom: 12,
+    minWidth: 0,
   },
   avatar: {
     width: 38,
@@ -394,6 +488,7 @@ const styles = StyleSheet.create({
   },
   userInfo: {
     flex: 1,
+    minWidth: 0,
   },
   userName: {
     fontSize: 13,

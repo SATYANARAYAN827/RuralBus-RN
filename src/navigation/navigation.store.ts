@@ -1,4 +1,4 @@
-﻿import { create } from 'zustand';
+import { create } from 'zustand';
 import { UserRole, UserProfile } from '../types';
 
 interface NavigationState {
@@ -9,11 +9,12 @@ interface NavigationState {
   user: UserProfile | null;
   unreadNotifsCount: number;
 
-  setActiveRole: (role: UserRole) => void;
+  setActiveRole: (role: UserRole, customUser?: UserProfile | null) => void;
   setActiveTab: (tab: string) => void;
   toggleMobileNav: () => void;
   setMobileNavOpen: (open: boolean) => void;
-  login: (role?: UserRole) => void;
+  setUser: (user: UserProfile | null) => void;
+  login: (role?: UserRole, customUser?: UserProfile | null) => void;
   logout: () => void;
 }
 
@@ -54,9 +55,10 @@ const getMockUser = (role: UserRole): UserProfile => {
       };
     case 'PLATFORM_ADMIN':
       return {
-        id: 'usr-superadmin-1',
-        phone: '9999999999',
+        id: 'faaaf9ea-6f46-4f75-adc9-6e84d4fbcdef',
+        phone: '9876500000',
         fullName: 'State Transport Super Admin',
+        email: 'superadmin@ruralbus.gov.in',
         role: 'PLATFORM_ADMIN',
         isActive: true,
         mustChangePassword: false,
@@ -80,16 +82,23 @@ export const useNavigationStore = create<NavigationState>((set, get) => ({
   activeRole: 'PASSENGER',
   activeTab: 'HOME',
   isMobileNavOpen: false,
-  isAuthenticated: true,
-  user: getMockUser('PASSENGER'),
+  isAuthenticated: false,
+  user: null,
   unreadNotifsCount: 0,
 
-  setActiveRole: (role: UserRole) => {
+  setUser: (user: UserProfile | null) => {
+    set({ user });
+  },
+
+  setActiveRole: (role: UserRole, customUser?: UserProfile | null) => {
+    const current = customUser !== undefined 
+      ? customUser 
+      : (get().user?.role === role ? get().user : getMockUser(role));
     set({
       activeRole: role,
       activeTab: 'HOME',
       isMobileNavOpen: false,
-      user: getMockUser(role),
+      user: current,
       unreadNotifsCount: role === 'PLATFORM_ADMIN' ? 9 : 0,
     });
   },
@@ -106,18 +115,19 @@ export const useNavigationStore = create<NavigationState>((set, get) => ({
     set({ isMobileNavOpen: open });
   },
 
-  login: (role: UserRole = 'PASSENGER') => {
+  login: (role: UserRole = 'PASSENGER', customUser?: UserProfile | null) => {
     set({
       isAuthenticated: true,
       activeRole: role,
       activeTab: 'HOME',
-      user: getMockUser(role),
+      user: customUser !== undefined ? customUser : getMockUser(role),
     });
   },
 
   logout: () => {
     set({
       isAuthenticated: false,
+      user: null,
       isMobileNavOpen: false,
     });
   },

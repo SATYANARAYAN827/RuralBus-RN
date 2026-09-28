@@ -38,9 +38,18 @@ export const EditBusModal: React.FC = () => {
       setModel(editingBus.model || '');
       setTotalSeats(String(editingBus.totalSeats || 40));
       setSeatingType(editingBus.seatingType || 'SEATER_2X2');
-      setStatus(editingBus.status || 'ACTIVE');
-      setSelectedDriverId(editingBus.assignedDriver?.userId || null);
-      setSelectedConductorId(editingBus.assignedConductor?.userId || null);
+      const initialDriver =
+        editingBus.driverId ||
+        editingBus.assignedDriver?.userId ||
+        editingBus.assignedDriver?.id ||
+        null;
+      const initialConductor =
+        editingBus.conductorId ||
+        editingBus.assignedConductor?.userId ||
+        editingBus.assignedConductor?.id ||
+        null;
+      setSelectedDriverId(initialDriver);
+      setSelectedConductorId(initialConductor);
     }
   }, [editingBus]);
 
@@ -212,10 +221,10 @@ export const EditBusModal: React.FC = () => {
             </Text>
           </TouchableOpacity>
           {drivers.map((d) => {
-            const isSelected = selectedDriverId === d.userId;
+            const isSelected = selectedDriverId === d.id || selectedDriverId === d.userId;
             return (
               <TouchableOpacity
-                key={d.userId}
+                key={d.id || d.userId}
                 style={[
                   styles.pill,
                   {
@@ -226,7 +235,7 @@ export const EditBusModal: React.FC = () => {
                       : 'rgba(255,255,255,0.08)',
                   },
                 ]}
-                onPress={() => setSelectedDriverId(d.userId)}
+                onPress={() => setSelectedDriverId(d.id)}
               >
                 <Text
                   style={[
@@ -268,10 +277,10 @@ export const EditBusModal: React.FC = () => {
             </Text>
           </TouchableOpacity>
           {conductors.map((c) => {
-            const isSelected = selectedConductorId === c.userId;
+            const isSelected = selectedConductorId === c.id || selectedConductorId === c.userId;
             return (
               <TouchableOpacity
-                key={c.userId}
+                key={c.id || c.userId}
                 style={[
                   styles.pill,
                   {
@@ -282,7 +291,7 @@ export const EditBusModal: React.FC = () => {
                       : 'rgba(255,255,255,0.08)',
                   },
                 ]}
-                onPress={() => setSelectedConductorId(c.userId)}
+                onPress={() => setSelectedConductorId(c.id)}
               >
                 <Text
                   style={[

@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useAuthStore } from '../../stores/auth.store';
 import { AUTH_TRANSLATIONS } from '../../theme/i18n';
@@ -7,11 +7,13 @@ import { Modal, Button, TextInput } from '../../components/common';
 export interface ForceChangePasswordModalProps {
   isOpen: boolean;
   onSuccess?: () => void;
+  onClose?: () => void;
 }
 
 export const ForceChangePasswordModal: React.FC<ForceChangePasswordModalProps> = ({
   isOpen,
   onSuccess,
+  onClose,
 }) => {
   const authStore = useAuthStore();
   const t = AUTH_TRANSLATIONS[authStore.lang] || AUTH_TRANSLATIONS.EN;
@@ -21,6 +23,20 @@ export const ForceChangePasswordModal: React.FC<ForceChangePasswordModalProps> =
   const [confirmPass, setConfirmPass] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [isDismissed, setIsDismissed] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      setIsDismissed(false);
+    }
+  }, [isOpen]);
+
+  const handleClose = () => {
+    setIsDismissed(true);
+    if (onClose) {
+      onClose();
+    }
+  };
 
   const handleSubmit = async () => {
     if (!currPass) {
@@ -40,6 +56,7 @@ export const ForceChangePasswordModal: React.FC<ForceChangePasswordModalProps> =
     setErrorMsg('');
     try {
       await authStore.forceChangePassword(currPass, newPass);
+      setIsDismissed(true);
       if (onSuccess) onSuccess();
     } catch (err: any) {
       setErrorMsg(err?.message || 'Failed to update password');
@@ -50,8 +67,8 @@ export const ForceChangePasswordModal: React.FC<ForceChangePasswordModalProps> =
 
   return (
     <Modal
-      isOpen={isOpen}
-      onClose={() => {}} // Mandatory security modal, cannot be dismissed without completing
+      isOpen={isOpen && !isDismissed}
+      onClose={handleClose}
       title={t.forceChange.title}
       subtitle={t.forceChange.subtitle}
       icon="🛡️"

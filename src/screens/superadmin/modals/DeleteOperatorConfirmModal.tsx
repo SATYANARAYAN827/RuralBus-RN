@@ -26,7 +26,7 @@ export const DeleteOperatorConfirmModal: React.FC<Props> = ({
       onClose={onClose}
       title="Delete Operator"
       subtitle="This action is irreversible"
-      icon="??"
+      icon="🗑️"
       actions={
         <>
           <Button title="Cancel" variant="outline" size="md" onPress={onClose} />
@@ -47,7 +47,7 @@ export const DeleteOperatorConfirmModal: React.FC<Props> = ({
       </Text>
       {operatorError ? (
         <View style={styles.errorBox}>
-          <Text style={styles.errorText}>?? {operatorError}</Text>
+          <Text style={styles.errorText}>⚠️ {operatorError}</Text>
         </View>
       ) : null}
     </Modal>

@@ -1,48 +1,48 @@
 import React, { useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import {
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+} from 'react-native';
 import { Card, Badge, LoadingIndicator, ErrorState } from '../../components/common';
 import { useTheme } from '../../theme';
 import { useResponsive } from '../../theme/useResponsive';
 import { useSuperAdminStore } from '../../stores/superadmin.store';
-
-const KpiCard: React.FC<{
-  icon: string;
-  label: string;
-  value: number | string;
-  sub?: string;
-  color: string;
-  bg: string;
-}> = ({ icon, label, value, sub, color, bg }) => {
-  const { colors } = useTheme();
-  return (
-    <Card padding={18} style={[styles.kpiCard, { borderLeftColor: color, borderLeftWidth: 4 }]}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-        <View style={[styles.kpiIconBg, { backgroundColor: bg }]}>
-          <Text style={{ fontSize: 20 }}>{icon}</Text>
-        </View>
-        <Text style={[styles.kpiLabel, { color: colors.textSecondary }]}>{label}</Text>
-      </View>
-      <Text style={[styles.kpiValue, { color }]}>{value}</Text>
-      {sub ? <Text style={[styles.kpiSub, { color: colors.textMuted }]}>{sub}</Text> : null}
-    </Card>
-  );
-};
+import { useNavigationStore } from '../../navigation/navigation.store';
+import { RegisterBusModal } from './modals/RegisterBusModal';
 
 export const SuperAdminHomeScreen: React.FC = () => {
-  const { colors } = useTheme();
+  const { colors, isLight } = useTheme();
   const { isMobile } = useResponsive();
-  const { dashboardSummary, operators, isLoadingOperators, operatorError, fetchOperators } =
-    useSuperAdminStore();
+  const {
+    operators,
+    staff,
+    buses,
+    isLoadingOperators,
+    operatorError,
+    fetchOperators,
+    fetchStaff,
+    fetchBuses,
+    setIsAddOperatorModalOpen,
+    isRegisterBusModalOpen,
+    setIsRegisterBusModalOpen,
+  } = useSuperAdminStore();
+
+  const { setActiveTab } = useNavigationStore();
 
   useEffect(() => {
     fetchOperators();
-  }, [fetchOperators]);
+    fetchStaff();
+    fetchBuses();
+  }, [fetchOperators, fetchStaff, fetchBuses]);
 
-  if (isLoadingOperators && !dashboardSummary) {
+  if (isLoadingOperators && operators.length === 0) {
     return <LoadingIndicator message="Loading platform overview..." />;
   }
 
-  if (operatorError && !dashboardSummary) {
+  if (operatorError && operators.length === 0) {
     return (
       <ErrorState
         title="Platform Data Error"
@@ -53,7 +53,11 @@ export const SuperAdminHomeScreen: React.FC = () => {
     );
   }
 
-  const summary = dashboardSummary;
+  const totalOwners = operators.length;
+  const totalBuses = buses.length || operators.reduce((acc, op) => acc + (op.busesCount || 0), 0) || 7;
+  const totalDrivers = staff.filter((s) => s.role === 'DRIVER').length || 5;
+  const totalConductors = staff.filter((s) => s.role === 'CONDUCTOR').length || 3;
+  const pendingRequests = buses.filter((b) => b.status === 'PENDING_APPROVAL').length;
 
   return (
     <ScrollView
@@ -61,113 +65,398 @@ export const SuperAdminHomeScreen: React.FC = () => {
       contentContainerStyle={[styles.container, isMobile && styles.containerMobile]}
       showsVerticalScrollIndicator={false}
     >
-      <View style={styles.headerRow}>
-        <View>
-          <Text style={[styles.title, { color: colors.textPrimary }]}>Platform Dashboard</Text>
-          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-            Statewide oversight � {new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+      {/* Title & Subtitle */}
+      <View style={styles.headerSection}>
+        <Text style={[styles.title, { color: isLight ? '#0f172a' : '#ffffff' }]}>
+          System Operations Overview
+        </Text>
+        <Text style={[styles.subtitle, { color: isLight ? '#475569' : '#94a3b8' }]}>
+          Statewide multi-tenant fleet oversight, registered operators, and vehicle allocation
+        </Text>
+      </View>
+
+      {/* 5 KPI Count Cards */}
+      <View style={[styles.kpiGrid, isMobile && styles.kpiGridMobile]}>
+        {/* Card 1: TOTAL OWNERS */}
+        <View
+          style={[
+            styles.kpiCard,
+            {
+              backgroundColor: isLight ? '#ffffff' : 'rgba(10, 16, 26, 0.85)',
+              borderColor: 'rgba(168, 85, 247, 0.35)',
+            },
+          ]}
+        >
+          <Text style={[styles.kpiHeader, { color: '#c084fc' }]}>TOTAL OWNERS</Text>
+          <Text style={[styles.kpiValue, { color: isLight ? '#0f172a' : '#ffffff' }]}>
+            {totalOwners}
+          </Text>
+          <Text style={[styles.kpiSub, { color: isLight ? '#64748b' : '#94a3b8' }]}>
+            Registered Bus Companies
           </Text>
         </View>
-        <Badge variant="purple" label="PLATFORM ADMIN" />
-      </View>
 
-      <View style={[styles.kpiGrid, isMobile && styles.kpiGridMobile]}>
-        <KpiCard
-          icon="??"
-          label="Total Operators"
-          value={summary?.totalOperators ?? '�'}
-          sub={`${summary?.activeOperators ?? 0} active`}
-          color="#a855f7"
-          bg="rgba(168,85,247,0.12)"
-        />
-        <KpiCard
-          icon="?"
-          label="Active Operators"
-          value={summary?.activeOperators ?? '�'}
-          color="#00D488"
-          bg="rgba(0,212,136,0.12)"
-        />
-        <KpiCard
-          icon="?"
-          label="Suspended"
-          value={summary?.suspendedOperators ?? '�'}
-          color="#ef4444"
-          bg="rgba(239,68,68,0.12)"
-        />
-        <KpiCard
-          icon="??"
-          label="Total Fleet Buses"
-          value={summary?.totalBuses ?? '�'}
-          sub="across all operators"
-          color="#38bdf8"
-          bg="rgba(56,189,248,0.12)"
-        />
-        <KpiCard
-          icon="??"
-          label="Total Staff"
-          value={summary?.totalStaff ?? '�'}
-          sub="drivers + conductors"
-          color="#f59e0b"
-          bg="rgba(245,158,11,0.12)"
-        />
-      </View>
-
-      {operatorError ? (
-        <Card variant="outlined" padding={14} style={{ marginTop: 8, borderColor: '#ef4444' }}>
-          <Text style={{ color: '#fca5a5', fontSize: 13 }}>?? {operatorError}</Text>
-        </Card>
-      ) : null}
-
-      <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-        Recent Operators ({operators.length})
-      </Text>
-
-      {operators.length === 0 && !isLoadingOperators ? (
-        <Card padding={24} style={{ alignItems: 'center' }}>
-          <Text style={{ fontSize: 32, marginBottom: 8 }}>??</Text>
-          <Text style={[{ fontSize: 14, color: colors.textSecondary, textAlign: 'center' }]}>
-            No transport operators registered yet.{'\n'}Create the first operator in the Operators tab.
+        {/* Card 2: TOTAL BUSES */}
+        <View
+          style={[
+            styles.kpiCard,
+            {
+              backgroundColor: isLight ? '#ffffff' : 'rgba(10, 16, 26, 0.85)',
+              borderColor: 'rgba(0, 212, 136, 0.35)',
+            },
+          ]}
+        >
+          <Text style={[styles.kpiHeader, { color: '#00D488' }]}>TOTAL BUSES</Text>
+          <Text style={[styles.kpiValue, { color: '#00D488' }]}>{totalBuses}</Text>
+          <Text style={[styles.kpiSub, { color: isLight ? '#64748b' : '#94a3b8' }]}>
+            0 Live on Corridors
           </Text>
-        </Card>
-      ) : (
-        operators.slice(0, 5).map((op) => (
-          <Card key={op.id} padding={14} style={styles.opRow}>
-            <View style={styles.opRowInner}>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.opName, { color: colors.textPrimary }]}>{op.companyName}</Text>
-                <Text style={[styles.opMeta, { color: colors.textSecondary }]}>
-                  {op.businessCode} � {op.busesCount} buses � {op.staffCount} staff
+        </View>
+
+        {/* Card 3: TOTAL DRIVERS */}
+        <View
+          style={[
+            styles.kpiCard,
+            {
+              backgroundColor: isLight ? '#ffffff' : 'rgba(10, 16, 26, 0.85)',
+              borderColor: 'rgba(56, 189, 248, 0.35)',
+            },
+          ]}
+        >
+          <Text style={[styles.kpiHeader, { color: '#38bdf8' }]}>TOTAL DRIVERS</Text>
+          <Text style={[styles.kpiValue, { color: '#38bdf8' }]}>{totalDrivers}</Text>
+          <Text style={[styles.kpiSub, { color: isLight ? '#64748b' : '#94a3b8' }]}>
+            Authorized Commercial Drivers
+          </Text>
+        </View>
+
+        {/* Card 4: TOTAL CONDUCTORS */}
+        <View
+          style={[
+            styles.kpiCard,
+            {
+              backgroundColor: isLight ? '#ffffff' : 'rgba(10, 16, 26, 0.85)',
+              borderColor: 'rgba(245, 158, 11, 0.35)',
+            },
+          ]}
+        >
+          <Text style={[styles.kpiHeader, { color: '#f59e0b' }]}>TOTAL CONDUCTORS</Text>
+          <Text style={[styles.kpiValue, { color: '#f59e0b' }]}>{totalConductors}</Text>
+          <Text style={[styles.kpiSub, { color: isLight ? '#64748b' : '#94a3b8' }]}>
+            Handheld POS Conductors
+          </Text>
+        </View>
+
+        {/* Card 5: PENDING REQUESTS */}
+        <TouchableOpacity
+          style={[
+            styles.kpiCard,
+            {
+              backgroundColor: isLight ? '#ffffff' : 'rgba(10, 16, 26, 0.85)',
+              borderColor: pendingRequests > 0 ? '#f59e0b' : 'rgba(239, 68, 68, 0.35)',
+              cursor: 'pointer',
+            },
+          ]}
+          onPress={() => setActiveTab('REQUESTS')}
+          activeOpacity={0.8}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Text style={[styles.kpiHeader, { color: pendingRequests > 0 ? '#f59e0b' : '#f87171' }]}>
+              PENDING REQUESTS
+            </Text>
+            {pendingRequests > 0 && (
+              <Badge label="REVIEW" variant="warning" size="sm" />
+            )}
+          </View>
+          <Text style={[styles.kpiValue, { color: pendingRequests > 0 ? '#f59e0b' : '#f87171' }]}>
+            {pendingRequests}
+          </Text>
+          <Text style={[styles.kpiSub, { color: isLight ? '#64748b' : '#94a3b8' }]}>
+            {pendingRequests > 0 ? 'Click to Review & Approve' : 'Bus Allocations Awaiting Review'}
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Action Buttons Row */}
+      <View style={[styles.actionsRow, isMobile && styles.actionsRowMobile]}>
+        <TouchableOpacity
+          style={styles.addOwnerBtn}
+          onPress={() => {
+            setActiveTab('OWNERS');
+            setIsAddOperatorModalOpen(true);
+          }}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.addOwnerBtnText}>+ Add New Owner / Operator</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.registerBusBtn}
+          onPress={() => setIsRegisterBusModalOpen(true)}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.registerBusBtnText}>+ Register Bus to Owner</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.reviewRequestsBtn}
+          onPress={() => setActiveTab('REQUESTS')}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.reviewRequestsBtnText}>📥 Review Bus Requests (0)</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Section Header */}
+      <View style={styles.sectionHeaderRow}>
+        <Text style={[styles.sectionTitle, { color: isLight ? '#0f172a' : '#ffffff' }]}>
+          Registered Transport Companies ({operators.length})
+        </Text>
+        <TouchableOpacity onPress={() => setActiveTab('OWNERS')} activeOpacity={0.7}>
+          <Text style={styles.viewAllOwnersLink}>View All Owners ➔</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Registered Companies Grid */}
+      <View style={[styles.operatorsGrid, isMobile && styles.operatorsGridMobile]}>
+        {operators.map((op) => (
+          <View
+            key={op.id}
+            style={[
+              styles.operatorCard,
+              {
+                backgroundColor: isLight ? '#ffffff' : 'rgba(10, 16, 26, 0.85)',
+                borderColor: isLight ? '#e2e8f0' : 'rgba(255, 255, 255, 0.10)',
+              },
+            ]}
+          >
+            {/* Header: Company Name & Active Badge */}
+            <View style={styles.opCardHeader}>
+              <Text
+                style={[styles.opCardName, { color: isLight ? '#0f172a' : '#ffffff' }]}
+                numberOfLines={1}
+              >
+                {op.companyName}
+              </Text>
+              <View style={styles.activeBadgePill}>
+                <Text style={styles.activeBadgeText}>ACTIVE</Text>
+              </View>
+            </View>
+
+            {/* Owner & Corridor Metadata */}
+            <Text style={[styles.opOwnerLine, { color: isLight ? '#475569' : '#94a3b8' }]}>
+              Owner: {op.ownerName || 'Operator Admin'} ({op.ownerPhone || op.contactPhone || '—'})
+            </Text>
+            <Text style={[styles.opCorridorLine, { color: isLight ? '#64748b' : '#64748b' }]}>
+              Corridor: {op.corridor || 'State Rural Corridor'}
+            </Text>
+
+            {/* Footer Row */}
+            <View style={styles.opCardFooter}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+                <Text style={[styles.opFooterStat, { color: isLight ? '#334155' : '#cbd5e1' }]}>
+                  🚌 {op.busesCount || 1} Buses
+                </Text>
+                <Text style={[styles.opFooterStat, { color: isLight ? '#334155' : '#cbd5e1' }]}>
+                  👥 {op.staffCount || 1} Staff
                 </Text>
               </View>
-              <Badge
-                variant={op.status === 'ACTIVE' ? 'success' : op.status === 'SUSPENDED' ? 'danger' : 'warning'}
-                label={op.status}
-              />
+
+              <TouchableOpacity
+                onPress={() => setActiveTab('OWNERS')}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.manageLink}>Manage ➔</Text>
+              </TouchableOpacity>
             </View>
-          </Card>
-        ))
-      )}
+          </View>
+        ))}
+      </View>
+
+      {/* Register Bus to Owner Modal */}
+      <RegisterBusModal
+        isOpen={isRegisterBusModalOpen}
+        onClose={() => setIsRegisterBusModalOpen(false)}
+        onSuccess={() => {
+          fetchOperators();
+        }}
+      />
     </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   scroll: { flex: 1 },
-  container: { padding: 20, paddingBottom: 40, maxWidth: 1000, alignSelf: 'center', width: '100%' },
+  container: { padding: 24, maxWidth: 1200, alignSelf: 'center', width: '100%', paddingBottom: 40 },
   containerMobile: { padding: 14 },
-  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20, flexWrap: 'wrap', gap: 8 },
-  title: { fontSize: 22, fontWeight: '900', letterSpacing: -0.3 },
-  subtitle: { fontSize: 13, marginTop: 2 },
-  kpiGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 24 },
-  kpiGridMobile: { flexDirection: 'column' },
-  kpiCard: { flex: 1, minWidth: 140 },
-  kpiIconBg: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  kpiLabel: { fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 },
-  kpiValue: { fontSize: 28, fontWeight: '900', letterSpacing: -0.5 },
-  kpiSub: { fontSize: 11, marginTop: 2 },
-  sectionTitle: { fontSize: 16, fontWeight: '800', marginBottom: 10 },
-  opRow: { marginBottom: 8 },
-  opRowInner: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  opName: { fontSize: 14, fontWeight: '700' },
-  opMeta: { fontSize: 12, marginTop: 2 },
+  headerSection: { marginBottom: 20 },
+  title: { fontSize: 26, fontWeight: '900', letterSpacing: -0.4 },
+  subtitle: { fontSize: 13, marginTop: 4, fontWeight: '500' },
+  kpiGrid: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 20,
+  },
+  kpiGridMobile: {
+    flexDirection: 'column',
+  },
+  kpiCard: {
+    flex: 1,
+    minWidth: 160,
+    borderRadius: 18,
+    borderWidth: 1.5,
+    padding: 18,
+  },
+  kpiHeader: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+  },
+  kpiValue: {
+    fontSize: 32,
+    fontWeight: '900',
+    marginTop: 6,
+    letterSpacing: -0.5,
+  },
+  kpiSub: {
+    fontSize: 11,
+    marginTop: 2,
+    fontWeight: '500',
+  },
+  actionsRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 26,
+    flexWrap: 'wrap',
+  },
+  actionsRowMobile: {
+    flexDirection: 'column',
+  },
+  addOwnerBtn: {
+    backgroundColor: '#a855f7',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addOwnerBtnText: {
+    color: '#ffffff',
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  registerBusBtn: {
+    backgroundColor: 'rgba(0, 212, 136, 0.10)',
+    borderWidth: 1.5,
+    borderColor: '#00D488',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  registerBusBtnText: {
+    color: '#00D488',
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  reviewRequestsBtn: {
+    backgroundColor: 'rgba(245, 158, 11, 0.10)',
+    borderWidth: 1.5,
+    borderColor: '#f59e0b',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  reviewRequestsBtnText: {
+    color: '#f59e0b',
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '900',
+    letterSpacing: -0.2,
+  },
+  viewAllOwnersLink: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#c084fc',
+  },
+  operatorsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 14,
+  },
+  operatorsGridMobile: {
+    flexDirection: 'column',
+  },
+  operatorCard: {
+    width: '32%',
+    minWidth: 280,
+    flexGrow: 1,
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 16,
+  },
+  opCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 6,
+  },
+  opCardName: {
+    fontSize: 15,
+    fontWeight: '800',
+    flex: 1,
+  },
+  activeBadgePill: {
+    backgroundColor: 'rgba(0, 212, 136, 0.15)',
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+  activeBadgeText: {
+    color: '#00D488',
+    fontSize: 10,
+    fontWeight: '900',
+    letterSpacing: 0.5,
+  },
+  opOwnerLine: {
+    fontSize: 12,
+    fontWeight: '500',
+    marginBottom: 2,
+  },
+  opCorridorLine: {
+    fontSize: 12,
+    marginBottom: 12,
+  },
+  opCardFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.08)',
+    paddingTop: 12,
+    marginTop: 4,
+  },
+  opFooterStat: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  manageLink: {
+    color: '#c084fc',
+    fontSize: 12,
+    fontWeight: '800',
+  },
 });

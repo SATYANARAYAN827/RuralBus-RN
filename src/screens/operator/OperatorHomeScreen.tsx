@@ -89,8 +89,8 @@ export const OperatorHomeScreen: React.FC<OperatorHomeScreenProps> = ({
           },
         ]}
       >
-        <View style={styles.heroHeader}>
-          <View style={{ flex: 1 }}>
+        <View style={[styles.heroHeader, isMobile && styles.mobileHeroHeader]}>
+          <View style={[styles.heroTextContainer, isMobile && { width: '100%' }]}>
             <View style={styles.badgeRow}>
               <Badge label="FLEET OWNER" variant="mint" size="sm" />
               <Badge label="TENANT ISOLATED" variant="neutral" size="sm" />
@@ -103,7 +103,14 @@ export const OperatorHomeScreen: React.FC<OperatorHomeScreenProps> = ({
             </Text>
           </View>
           <TouchableOpacity
-            style={[styles.liveRadarPill, { backgroundColor: 'rgba(0, 212, 136, 0.15)' }]}
+            style={[
+              styles.liveRadarPill,
+              {
+                backgroundColor: 'rgba(0, 212, 136, 0.15)',
+                alignSelf: isMobile ? 'flex-start' : 'center',
+                marginTop: isMobile ? 8 : 0,
+              },
+            ]}
             onPress={onNavigateToLiveMap}
           >
             <Text style={styles.pulseDot}>🟢</Text>
@@ -164,10 +171,10 @@ export const OperatorHomeScreen: React.FC<OperatorHomeScreenProps> = ({
             <Badge label="FLEET" variant="neutral" size="sm" />
           </View>
           <Text style={[styles.kpiValue, { color: colors.textPrimary }]}>
-            {activeBuses}
+            {buses.length}
           </Text>
           <Text style={[styles.kpiLabel, { color: colors.textSecondary }]}>
-            Active Fleet Buses ({buses.length} total)
+            {buses.length === 1 ? '1 Fleet Bus' : `${buses.length} Fleet Buses`} ({activeBuses} active)
           </Text>
         </TouchableOpacity>
 
@@ -198,10 +205,10 @@ export const OperatorHomeScreen: React.FC<OperatorHomeScreenProps> = ({
             <Badge label="CREW" variant="neutral" size="sm" />
           </View>
           <Text style={[styles.kpiValue, { color: colors.textPrimary }]}>
-            {activeStaff}
+            {staff.length}
           </Text>
           <Text style={[styles.kpiLabel, { color: colors.textSecondary }]}>
-            Active Drivers & Conductors
+            {staff.length === 1 ? '1 Crew Member' : `${staff.length} Crew Members`} ({activeStaff} active)
           </Text>
         </TouchableOpacity>
 
@@ -344,10 +351,21 @@ const styles = StyleSheet.create({
     gap: 12,
     marginBottom: 14,
   },
+  mobileHeroHeader: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    gap: 10,
+  },
+  heroTextContainer: {
+    flex: 1,
+    minWidth: 220,
+  },
   badgeRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 6,
     marginBottom: 6,
+    alignItems: 'center',
   },
   heroTitle: {
     fontSize: 22,

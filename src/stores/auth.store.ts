@@ -3,6 +3,7 @@ import { apiClient } from '../services/api.client';
 import { authStorage } from '../services/authStorage';
 import { API_CONFIG } from '../config/api.config';
 import { UserProfile, AuthTokens, UserRole, LanguageCode } from '../types';
+import { useNavigationStore } from '../navigation/navigation.store';
 
 export interface RegisterInput {
   fullName: string;
@@ -79,9 +80,10 @@ export const DEMO_USER_BY_ROLE: Record<UserRole, UserProfile> = {
     phoneVerified: true,
   },
   PLATFORM_ADMIN: {
-    id: 'usr-superadmin-demo',
-    phone: '9999999999',
+    id: 'faaaf9ea-6f46-4f75-adc9-6e84d4fbcdef',
+    phone: '9876500000',
     fullName: 'State Transport Super Admin',
+    email: 'superadmin@ruralbus.gov.in',
     role: 'PLATFORM_ADMIN',
     isActive: true,
     mustChangePassword: false,
@@ -136,10 +138,50 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const secureTokens = await authStorage.getTokens();
       if (secureTokens?.accessToken) {
         apiClient.setAuthToken(secureTokens.accessToken);
+        if (secureTokens.refreshToken) {
+          apiClient.setRefreshToken(secureTokens.refreshToken);
+        }
+
+        // Decode JWT payload to restore user context without a network round-trip.
+        // The JWT is already verified by the backend on every request; this is only
+        // used to re-hydrate the Zustand user slice for UI rendering & tenant routing.
+        let restoredUser: UserProfile | null = null;
+        try {
+          const parts = secureTokens.accessToken.split('.');
+          if (parts.length === 3) {
+            const payload = JSON.parse(
+              atob(parts[1].replace(/-/g, '+').replace(/_/g, '/'))
+            );
+            if (payload?.sub && payload?.role) {
+              restoredUser = {
+                id: payload.sub,
+                phone: payload.phone || '',
+                fullName: payload.fullName || '',
+                role: payload.role as UserRole,
+                tenantId: payload.tenantId || undefined,
+                isActive: true,
+                mustChangePassword: payload.mustChangePassword ?? false,
+                phoneVerified: payload.phoneVerified ?? true,
+              };
+            }
+          }
+        } catch {
+          // Non-fatal: JWT decode failed (malformed token), user stays null
+        }
+
         set({
           tokens: secureTokens,
           isAuthenticated: true,
+          user: restoredUser,
         });
+
+        // Sync restored user to navigation store for role-based routing
+        if (restoredUser) {
+          try {
+            useNavigationStore.getState().setActiveRole(restoredUser.role, restoredUser);
+            useNavigationStore.getState().setUser(restoredUser);
+          } catch {}
+        }
       }
     } catch {}
   },
@@ -160,8 +202,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       if (res.data?.user && res.data?.tokens) {
         const { user, tokens, tenant } = res.data;
 
+        // If phone wasn't populated by backend on user, ensure login phone is preserved
+        if (!user.phone && /^\d{10}$/.test(identifier.trim())) {
+          user.phone = identifier.trim();
+        }
+
         // Set token in API client in-memory and secure memory storage
         apiClient.setAuthToken(tokens.accessToken);
+        if (tokens.refreshToken) {
+          apiClient.setRefreshToken(tokens.refreshToken);
+        }
         await authStorage.setTokens(tokens);
 
         set({
@@ -172,6 +222,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           isLoading: false,
           error: null,
         });
+
+        // Directly sync user into navigationStore so it reflects immediately
+        try {
+          useNavigationStore.getState().setActiveRole(user.role, user);
+          useNavigationStore.getState().setUser(user);
+        } catch {}
         return;
       }
 
@@ -322,6 +378,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       isLoading: false,
       error: null,
     });
+    try {
+      useNavigationStore.getState().setActiveRole(role, demoUser);
+      useNavigationStore.getState().setUser(demoUser);
+    } catch {}
   },
 
   logout: async () => {
@@ -330,7 +390,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     } catch {}
 
     apiClient.setAuthToken(null);
+    apiClient.setRefreshToken(null);
     await authStorage.clearTokens();
+    try {
+      useNavigationStore.getState().logout();
+    } catch {}
 
     set({
       user: null,
