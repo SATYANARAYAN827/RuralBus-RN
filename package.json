@@ -26,7 +26,9 @@
     "build:packages": "pnpm --filter @ruralbus/shared-config --filter @ruralbus/shared-types --filter @ruralbus/shared-validators --filter @ruralbus/database build"
   },
   "dependencies": {
+    "@expo/metro-runtime": "~4.0.1",
     "@react-navigation/native": "^7.0.14",
+    "expo": "~52.0.0",
     "expo-secure-store": "^57.0.4",
     "leaflet": "^1.9.4",
     "react": "^18.3.1",
