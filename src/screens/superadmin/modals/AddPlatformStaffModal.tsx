@@ -320,6 +320,7 @@ export const AddPlatformStaffModal: React.FC<Props> = ({ isOpen, onClose, initia
         placeholder="e.g. Suresh Kumar"
         value={fullName}
         onChangeText={setFullName}
+        autoComplete="off"
       />
       <TextInput
         label="MOBILE NUMBER *"
@@ -327,6 +328,7 @@ export const AddPlatformStaffModal: React.FC<Props> = ({ isOpen, onClose, initia
         value={phone}
         onChangeText={setPhone}
         keyboardType="phone-pad"
+        autoComplete="off"
       />
       <TextInput
         label="EMAIL (OPTIONAL)"
@@ -334,6 +336,7 @@ export const AddPlatformStaffModal: React.FC<Props> = ({ isOpen, onClose, initia
         value={email}
         onChangeText={setEmail}
         keyboardType="email-address"
+        autoComplete="off"
       />
       <TextInput
         label="INITIAL PASSWORD *"
@@ -341,6 +344,7 @@ export const AddPlatformStaffModal: React.FC<Props> = ({ isOpen, onClose, initia
         value={password}
         onChangeText={setPassword}
         secureTextEntry
+        autoComplete="new-password"
         leftIcon="🔒"
       />
     </Modal>

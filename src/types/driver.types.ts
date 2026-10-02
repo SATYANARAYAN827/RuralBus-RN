@@ -92,3 +92,45 @@ export interface GpsPingResponse {
   tripId?: string;
   recordedAt?: string;
 }
+
+export interface TrajectoryPoint {
+  latitude: number;
+  longitude: number;
+  speed?: number;
+  heading?: number;
+  timestamp?: number;
+}
+
+export interface TripTrajectoryResponse {
+  tripId: string;
+  totalDistanceKm: number;
+  totalPoints: number;
+  simplifiedPoints: number;
+  compressionRatioPercent: number;
+  polyline: Array<{ latitude: number; longitude: number; timestamp?: number }>;
+  completedAt?: string;
+}
+
+export interface LiveVehicleStateResponse {
+  state: {
+    tripId: string;
+    busId: string;
+    operatorId: string;
+    routeId: string;
+    routeCode: string;
+    latitude: number;
+    longitude: number;
+    speed: number;
+    heading: number;
+    capturedAt: number;
+    receivedAt: string;
+    lastUpdated: string;
+    freshness: 'LIVE' | 'STALE' | 'OFFLINE' | 'NO_DATA';
+    currentStopSequence?: number;
+    currentStopId?: string;
+    nextStopSequence?: number;
+    nextStopId?: string;
+    etaMinutes?: number;
+  } | null;
+  freshness: 'LIVE' | 'STALE' | 'OFFLINE' | 'NO_DATA';
+}

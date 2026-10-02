@@ -23,16 +23,17 @@ export const ForceChangePasswordModal: React.FC<ForceChangePasswordModalProps> =
   const [confirmPass, setConfirmPass] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
-  const [isDismissed, setIsDismissed] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
-      setIsDismissed(false);
+      setCurrPass('');
+      setNewPass('');
+      setConfirmPass('');
+      setErrorMsg('');
     }
   }, [isOpen]);
 
   const handleClose = () => {
-    setIsDismissed(true);
     if (onClose) {
       onClose();
     }
@@ -56,8 +57,8 @@ export const ForceChangePasswordModal: React.FC<ForceChangePasswordModalProps> =
     setErrorMsg('');
     try {
       await authStore.forceChangePassword(currPass, newPass);
-      setIsDismissed(true);
       if (onSuccess) onSuccess();
+      if (onClose) onClose();
     } catch (err: any) {
       setErrorMsg(err?.message || 'Failed to update password');
     } finally {
@@ -67,7 +68,7 @@ export const ForceChangePasswordModal: React.FC<ForceChangePasswordModalProps> =
 
   return (
     <Modal
-      isOpen={isOpen && !isDismissed}
+      isOpen={isOpen}
       onClose={handleClose}
       title={t.forceChange.title}
       subtitle={t.forceChange.subtitle}

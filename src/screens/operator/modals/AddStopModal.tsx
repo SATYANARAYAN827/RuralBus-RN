@@ -3,7 +3,7 @@
  * Creates transit stoppage with precise geographic coordinates and code.
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Modal, Button, TextInput } from '../../../components/common';
 import { useOperatorStore } from '../../../stores/operator.store';
@@ -13,10 +13,25 @@ export const AddStopModal: React.FC = () => {
 
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
-  const [latitude, setLatitude] = useState('20.2961');
-  const [longitude, setLongitude] = useState('85.8245');
+  const [latitude, setLatitude] = useState('');
+  const [longitude, setLongitude] = useState('');
   const [landmark, setLandmark] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
+
+  const resetForm = () => {
+    setName('');
+    setCode('');
+    setLatitude('');
+    setLongitude('');
+    setLandmark('');
+    setFormError(null);
+  };
+
+  useEffect(() => {
+    if (isAddStopModalOpen) {
+      resetForm();
+    }
+  }, [isAddStopModalOpen]);
 
   const handleCreate = async () => {
     setFormError(null);
@@ -52,11 +67,7 @@ export const AddStopModal: React.FC = () => {
     });
 
     if (success) {
-      setName('');
-      setCode('');
-      setLatitude('20.2961');
-      setLongitude('85.8245');
-      setLandmark('');
+      resetForm();
       setIsAddStopModalOpen(false);
     }
   };
@@ -97,6 +108,7 @@ export const AddStopModal: React.FC = () => {
           placeholder="e.g. Baramunda Bus Terminal"
           value={name}
           onChangeText={setName}
+          autoComplete="off"
           style={styles.field}
         />
 
@@ -106,6 +118,7 @@ export const AddStopModal: React.FC = () => {
           value={code}
           onChangeText={setCode}
           autoCapitalize="characters"
+          autoComplete="off"
           style={styles.field}
         />
 
@@ -113,19 +126,21 @@ export const AddStopModal: React.FC = () => {
           <View style={{ flex: 1 }}>
             <TextInput
               label="LATITUDE (-90 to 90) *"
-              placeholder="20.2961"
+              placeholder="e.g. 20.2961"
               value={latitude}
               onChangeText={setLatitude}
               keyboardType="numeric"
+              autoComplete="off"
             />
           </View>
           <View style={{ flex: 1 }}>
             <TextInput
               label="LONGITUDE (-180 to 180) *"
-              placeholder="85.8245"
+              placeholder="e.g. 85.8245"
               value={longitude}
               onChangeText={setLongitude}
               keyboardType="numeric"
+              autoComplete="off"
             />
           </View>
         </View>
@@ -135,6 +150,7 @@ export const AddStopModal: React.FC = () => {
           placeholder="e.g. Near Overbridge"
           value={landmark}
           onChangeText={setLandmark}
+          autoComplete="off"
           style={{ ...styles.field, marginTop: 12 }}
         />
       </View>

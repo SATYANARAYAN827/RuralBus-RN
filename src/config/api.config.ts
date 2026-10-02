@@ -17,19 +17,22 @@ const getEnvVar = (key: string): string | undefined => {
   }
 };
 
+const rawBaseUrl = getEnvVar('EXPO_PUBLIC_API_URL') || getEnvVar('REACT_APP_API_URL') || 'http://localhost:4000';
+const derivedWsUrl = rawBaseUrl.replace(/^http/, 'ws').replace(/\/$/, '') + '/ws/tracking';
+
 export const API_CONFIG = {
   /**
    * HTTP Base URL for Fastify REST endpoints.
    * On Android Emulator use 'http://10.0.2.2:4000'
    * On Web / Localhost use 'http://localhost:4000'
-   * On Physical Device use LAN IP (e.g. 'http://192.168.1.x:4000')
+   * On Cloud / Production use 'https://<your-render-url>.onrender.com'
    */
-  BASE_URL: getEnvVar('EXPO_PUBLIC_API_URL') || getEnvVar('REACT_APP_API_URL') || 'http://localhost:4000',
+  BASE_URL: rawBaseUrl,
 
   /**
    * WebSocket URL for live GPS telemetry and real-time tracking room subscriptions.
    */
-  WS_URL: getEnvVar('EXPO_PUBLIC_WS_URL') || getEnvVar('REACT_APP_WS_URL') || 'ws://localhost:4000/ws/tracking',
+  WS_URL: getEnvVar('EXPO_PUBLIC_WS_URL') || getEnvVar('REACT_APP_WS_URL') || derivedWsUrl,
 
   /** Request timeout in milliseconds */
   TIMEOUT_MS: 15000,
@@ -84,10 +87,11 @@ export const API_CONFIG = {
     CONDUCTOR_OFFLINE_CASH_SYNC: '/api/v1/conductor/offline-tickets/sync',
     CONDUCTOR_CASH_SETTLEMENT: (tripId: string) => `/api/v1/conductor/cash-settlement/${tripId}`,
 
-    // Live Telemetry (Fastify: apps/api/src/routes/telemetry.ts)
+    // Live Telemetry (Fastify: apps/api/src/routes/telemetry.ts & trajectory.ts)
     GPS_PING: '/api/v1/tracking/ping',
     TRIP_STATE: (tripId: string) => `/api/v1/tracking/trip/${tripId}/state`,
     TRIP_LOCATION: (tripId: string) => `/api/v1/tracking/trip/${tripId}`,
+    TRIP_TRAJECTORY: (tripId: string) => `/api/v1/trips/${tripId}/trajectory`,
     FLEET_RADAR: '/api/v1/tracking/fleet',
 
     // Operator Management (Fastify: apps/api/src/routes/operator.ts & fleet.ts)

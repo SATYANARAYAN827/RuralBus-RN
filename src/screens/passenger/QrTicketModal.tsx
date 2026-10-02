@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, Image, ActivityIndicator } from 'react-native';
 import { useTheme } from '../../theme';
 import { Modal, Button, Badge } from '../../components/common';
 import { PassengerTicket } from '../../types';
@@ -18,6 +18,57 @@ export const QrTicketModal: React.FC<QrTicketModalProps> = ({
   onTrackTrip,
 }) => {
   const { colors, isLight } = useTheme();
+  const [qrImageUri, setQrImageUri] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!ticket) return;
+
+    // Use authentic cryptographic signature payload from backend
+    const qrValue =
+      ticket.qrPayload ||
+      ticket.signature ||
+      (ticket.id ? `TKT-QR:${ticket.id}` : ticket.pnr);
+
+    const generateQrCode = () => {
+      if ((window as any).QRCode) {
+        (window as any).QRCode.toDataURL(
+          qrValue,
+          {
+            width: 280,
+            margin: 2,
+            color: {
+              dark: '#0f172a',
+              light: '#ffffff',
+            },
+            errorCorrectionLevel: 'M',
+          },
+          (err: any, url: string) => {
+            if (!err && url) {
+              setQrImageUri(url);
+            }
+          }
+        );
+      }
+    };
+
+    if (typeof window === 'undefined') return;
+
+    if ((window as any).QRCode) {
+      generateQrCode();
+      return;
+    }
+
+    if (!document.getElementById('qrcode-generator-script')) {
+      const script = document.createElement('script');
+      script.id = 'qrcode-generator-script';
+      script.src = 'https://unpkg.com/qrcode@1.5.3/build/qrcode.min.js';
+      script.async = true;
+      script.onload = () => generateQrCode();
+      document.head.appendChild(script);
+    } else {
+      document.getElementById('qrcode-generator-script')?.addEventListener('load', generateQrCode);
+    }
+  }, [ticket]);
 
   if (!ticket) return null;
 
@@ -50,7 +101,7 @@ export const QrTicketModal: React.FC<QrTicketModalProps> = ({
           <Badge variant="success" label={ticket.status} />
         </View>
 
-        {/* QR Code Container with Reticle */}
+        {/* Real QR Code Container with Scanner Reticle */}
         <View
           style={[
             styles.qrContainer,
@@ -66,47 +117,24 @@ export const QrTicketModal: React.FC<QrTicketModalProps> = ({
           <View style={[styles.corner, styles.cornerBL]} />
           <View style={[styles.corner, styles.cornerBR]} />
 
-          {/* QR Code Graphic Matrix simulation */}
-          <View style={styles.qrMatrix}>
-            <View style={styles.qrRow}>
-              <View style={[styles.qrEye, { borderColor: '#0f172a' }]}>
-                <View style={[styles.qrEyeInner, { backgroundColor: '#0f172a' }]} />
+          {/* Genuine QR Code Image */}
+          <View style={styles.qrImageWrapper}>
+            {qrImageUri ? (
+              <Image
+                source={{ uri: qrImageUri }}
+                style={styles.qrImage}
+                resizeMode="contain"
+              />
+            ) : (
+              <View style={styles.qrLoadingBox}>
+                <ActivityIndicator size="large" color="#00D488" />
+                <Text style={styles.qrLoadingText}>Generating Boarding QR...</Text>
               </View>
-              <View style={styles.qrBarGroup}>
-                <View style={[styles.qrBlock, { backgroundColor: '#0f172a' }]} />
-                <View style={[styles.qrBlock, { backgroundColor: 'transparent' }]} />
-                <View style={[styles.qrBlock, { backgroundColor: '#0f172a' }]} />
-              </View>
-              <View style={[styles.qrEye, { borderColor: '#0f172a' }]}>
-                <View style={[styles.qrEyeInner, { backgroundColor: '#0f172a' }]} />
-              </View>
-            </View>
-
-            <View style={styles.qrMidRow}>
-              <View style={[styles.qrBlock, { backgroundColor: '#0f172a', width: 24, height: 16 }]} />
-              <View style={[styles.qrBlock, { backgroundColor: '#00D488', width: 44, height: 28, borderRadius: 6, alignItems: 'center', justifyContent: 'center' }]}>
-                <Text style={{ fontSize: 14 }}>🚌</Text>
-              </View>
-              <View style={[styles.qrBlock, { backgroundColor: '#0f172a', width: 24, height: 16 }]} />
-            </View>
-
-            <View style={styles.qrRow}>
-              <View style={[styles.qrEye, { borderColor: '#0f172a' }]}>
-                <View style={[styles.qrEyeInner, { backgroundColor: '#0f172a' }]} />
-              </View>
-              <View style={styles.qrBarGroup}>
-                <View style={[styles.qrBlock, { backgroundColor: '#0f172a' }]} />
-                <View style={[styles.qrBlock, { backgroundColor: '#0f172a' }]} />
-                <View style={[styles.qrBlock, { backgroundColor: 'transparent' }]} />
-              </View>
-              <View style={[styles.qrEye, { borderColor: '#0f172a', opacity: 0.8 }]}>
-                <View style={[styles.qrEyeInner, { backgroundColor: '#047857' }]} />
-              </View>
-            </View>
+            )}
           </View>
 
           <Text style={styles.qrHint}>
-            Ed25519 Cryptographically Signed · Offline Valid
+            HMAC SHA-256 Cryptographically Signed · Scannable
           </Text>
         </View>
 
@@ -238,49 +266,34 @@ const styles = StyleSheet.create({
   cornerTR: { top: 10, right: 10, borderTopWidth: 3, borderRightWidth: 3 },
   cornerBL: { bottom: 10, left: 10, borderBottomWidth: 3, borderLeftWidth: 3 },
   cornerBR: { bottom: 10, right: 10, borderBottomWidth: 3, borderRightWidth: 3 },
-  qrMatrix: {
-    width: 160,
-    height: 160,
-    justifyContent: 'space-between',
+  qrImageWrapper: {
+    width: 220,
+    height: 220,
+    alignItems: 'center',
+    justifyContent: 'center',
     padding: 4,
   },
-  qrRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  qrImage: {
+    width: 210,
+    height: 210,
   },
-  qrMidRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-  },
-  qrEye: {
-    width: 44,
-    height: 44,
-    borderWidth: 4,
-    borderRadius: 6,
+  qrLoadingBox: {
+    width: 210,
+    height: 210,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  qrEyeInner: {
-    width: 20,
-    height: 20,
-    borderRadius: 3,
-  },
-  qrBarGroup: {
-    flexDirection: 'row',
-    gap: 4,
-  },
-  qrBlock: {
-    width: 10,
-    height: 10,
-    borderRadius: 2,
+  qrLoadingText: {
+    fontSize: 11,
+    color: '#64748b',
+    marginTop: 8,
+    fontWeight: '700',
   },
   qrHint: {
     fontSize: 10,
     fontWeight: '700',
     color: '#64748b',
-    marginTop: 14,
+    marginTop: 10,
     letterSpacing: 0.3,
   },
   ticketDetails: {

@@ -27,6 +27,9 @@ export interface TextInputProps {
   keyboardType?: KeyboardTypeOptions;
   maxLength?: number;
   autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
+  autoComplete?: any;
+  autoCorrect?: boolean;
+  spellCheck?: boolean;
   style?: ViewStyle;
   inputStyle?: TextStyle;
   containerStyle?: ViewStyle;
@@ -48,6 +51,9 @@ export const TextInput: React.FC<TextInputProps> = ({
   keyboardType = 'default',
   maxLength,
   autoCapitalize = 'none',
+  autoComplete,
+  autoCorrect = false,
+  spellCheck = false,
   style,
   inputStyle,
   containerStyle,
@@ -55,6 +61,14 @@ export const TextInput: React.FC<TextInputProps> = ({
   const { colors, isLight, borderRadius, spacing } = useTheme();
   const [isFocused, setIsFocused] = useState(false);
   const [isPasswordVisible, setIsPasswordVisible] = useState(!secureTextEntry);
+
+  // Resolved autocomplete to prevent browser password managers from pre-filling unexpected fields
+  const resolvedAutoComplete =
+    autoComplete !== undefined
+      ? autoComplete
+      : secureTextEntry
+      ? 'new-password'
+      : 'off';
 
   const hasPasswordToggle = secureTextEntry;
 
@@ -108,6 +122,10 @@ export const TextInput: React.FC<TextInputProps> = ({
           keyboardType={keyboardType}
           maxLength={maxLength}
           autoCapitalize={autoCapitalize}
+          autoComplete={resolvedAutoComplete}
+          autoCorrect={autoCorrect}
+          spellCheck={spellCheck}
+          textContentType="none"
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
           style={[

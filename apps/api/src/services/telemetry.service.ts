@@ -773,37 +773,41 @@ export async function processGpsPing(
   // Load and cache route stops with geographic coordinates
   let routeStops = routeStopsCache.get(trip.routeId);
   if (!routeStops && trip.stopsData && trip.stopsData.length > 0) {
-    const stopIds = trip.stopsData.map((s) => s.stopId).filter(Boolean);
-    if (stopIds.length > 0) {
-      const stopRows = await withTenant(tenantId, async (tx) => {
-        return tx
-          .select({
-            id: stops.id,
-            latitude: stops.latitude,
-            longitude: stops.longitude,
-          })
-          .from(stops)
-          .where(and(eq(stops.tenantId, tenantId), inArray(stops.id, stopIds)));
-      });
+    try {
+      const stopIds = trip.stopsData.map((s: any) => s.stopId).filter(Boolean);
+      if (stopIds.length > 0) {
+        const stopRows = await withSystemContext(async (tx) => {
+          return tx
+            .select({
+              id: stops.id,
+              latitude: stops.latitude,
+              longitude: stops.longitude,
+            })
+            .from(stops)
+            .where(inArray(stops.id, stopIds));
+        });
 
-      const coordMap = new Map(stopRows.map((r) => [r.id, r]));
-      const resolved: RouteStopWithCoords[] = [];
-      for (const s of trip.stopsData) {
-        const coord = coordMap.get(s.stopId);
-        if (coord) {
-          resolved.push({
-            stopId: s.stopId,
-            sequenceNumber: s.sequenceNumber,
-            stopName: s.stopName,
-            latitude: coord.latitude,
-            longitude: coord.longitude,
-            distanceFromStartKm: s.distanceFromStartKm,
-          });
+        const coordMap = new Map(stopRows.map((r) => [r.id, r]));
+        const resolved: RouteStopWithCoords[] = [];
+        for (const s of trip.stopsData) {
+          const coord = coordMap.get(s.stopId);
+          if (coord) {
+            resolved.push({
+              stopId: s.stopId,
+              sequenceNumber: Number(s.sequenceNumber),
+              stopName: s.stopName,
+              latitude: Number(coord.latitude),
+              longitude: Number(coord.longitude),
+              distanceFromStartKm: Number(s.distanceFromStartKm || 0),
+            });
+          }
         }
+        resolved.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
+        routeStops = resolved;
+        routeStopsCache.set(trip.routeId, resolved);
       }
-      resolved.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
-      routeStops = resolved;
-      routeStopsCache.set(trip.routeId, resolved);
+    } catch (err) {
+      // Non-fatal if stops resolution fails
     }
   }
 

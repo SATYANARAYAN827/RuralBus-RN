@@ -26,14 +26,29 @@ export const AddRouteModal: React.FC = () => {
   const [destination, setDestination] = useState('');
   const [originStopId, setOriginStopId] = useState('');
   const [destStopId, setDestStopId] = useState('');
-  const [distanceKm, setDistanceKm] = useState('60');
-  const [durationMinutes, setDurationMinutes] = useState('90');
-  const [fare, setFare] = useState('80');
+  const [distanceKm, setDistanceKm] = useState('');
+  const [durationMinutes, setDurationMinutes] = useState('');
+  const [fare, setFare] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
 
+  const resetForm = () => {
+    setRouteCode('');
+    setOrigin('');
+    setDestination('');
+    setOriginStopId('');
+    setDestStopId('');
+    setDistanceKm('');
+    setDurationMinutes('');
+    setFare('');
+    setFormError(null);
+  };
+
   useEffect(() => {
-    if (isAddRouteModalOpen && stops.length === 0) {
-      fetchStops();
+    if (isAddRouteModalOpen) {
+      resetForm();
+      if (stops.length === 0) {
+        fetchStops();
+      }
     }
   }, [isAddRouteModalOpen, stops.length, fetchStops]);
 
@@ -106,9 +121,7 @@ export const AddRouteModal: React.FC = () => {
     });
 
     if (success) {
-      setRouteCode('');
-      setOrigin('');
-      setDestination('');
+      resetForm();
       setIsAddRouteModalOpen(false);
     }
   };
@@ -151,6 +164,7 @@ export const AddRouteModal: React.FC = () => {
           value={routeCode}
           onChangeText={setRouteCode}
           autoCapitalize="characters"
+          autoComplete="off"
           style={styles.field}
         />
 
@@ -159,6 +173,7 @@ export const AddRouteModal: React.FC = () => {
           placeholder="e.g. Bhubaneswar"
           value={origin}
           onChangeText={setOrigin}
+          autoComplete="off"
           style={styles.field}
         />
 
@@ -167,6 +182,7 @@ export const AddRouteModal: React.FC = () => {
           placeholder="e.g. Puri"
           value={destination}
           onChangeText={setDestination}
+          autoComplete="off"
           style={styles.field}
         />
 
@@ -260,28 +276,31 @@ export const AddRouteModal: React.FC = () => {
           <View style={{ flex: 1 }}>
             <TextInput
               label="DISTANCE (KM) *"
-              placeholder="60"
+              placeholder="e.g. 60"
               value={distanceKm}
               onChangeText={setDistanceKm}
               keyboardType="numeric"
+              autoComplete="off"
             />
           </View>
           <View style={{ flex: 1 }}>
             <TextInput
               label="DURATION (MIN) *"
-              placeholder="90"
+              placeholder="e.g. 90"
               value={durationMinutes}
               onChangeText={setDurationMinutes}
               keyboardType="numeric"
+              autoComplete="off"
             />
           </View>
           <View style={{ flex: 1 }}>
             <TextInput
               label="FARE (₹) *"
-              placeholder="80"
+              placeholder="e.g. 80"
               value={fare}
               onChangeText={setFare}
               keyboardType="numeric"
+              autoComplete="off"
             />
           </View>
         </View>

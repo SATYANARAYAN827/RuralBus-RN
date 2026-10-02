@@ -65,6 +65,11 @@ export const RoleRouter: React.FC = () => {
 
   const effectiveUser = authStore.user || navUser;
 
+  // Re-hydrate session from sessionStorage (web) or SecureStore (native) on app mount
+  useEffect(() => {
+    authStore.initialize();
+  }, []);
+
   // Initial fetch of authoritative counts for the active role
   useEffect(() => {
     if (activeRole === 'OPERATOR_ADMIN' && authStore.isAuthenticated) {

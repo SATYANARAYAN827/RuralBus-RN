@@ -285,9 +285,9 @@ export async function startDriverTrip(
             totalDistanceKm: 45,
             estimatedDurationMinutes: 60,
             stopsData: [
-              { stopId: 'stop-depot', stopName: 'Depot Central', sequenceNumber: 1, distanceFromStartKm: 0, estimatedMinutesFromStart: 0, location: { latitude: 26.8023, longitude: 75.8166 } },
-              { stopId: 'stop-junction', stopName: 'Highway Junction', sequenceNumber: 2, distanceFromStartKm: 22, estimatedMinutesFromStart: 30, location: { latitude: 26.8523, longitude: 75.8566 } },
-              { stopId: 'stop-term', stopName: corridorName, sequenceNumber: 3, distanceFromStartKm: 45, estimatedMinutesFromStart: 60, location: { latitude: 26.9023, longitude: 75.9066 } },
+              { stopId: 'stop-depot', stopName: 'Depot Central', sequenceNumber: 1, distanceFromStartKm: 0, estimatedMinutesFromStart: 0, fareFromStart: 0 },
+              { stopId: 'stop-junction', stopName: 'Highway Junction', sequenceNumber: 2, distanceFromStartKm: 22, estimatedMinutesFromStart: 30, fareFromStart: 25 },
+              { stopId: 'stop-term', stopName: corridorName, sequenceNumber: 3, distanceFromStartKm: 45, estimatedMinutesFromStart: 60, fareFromStart: 50 },
             ],
           })
           .returning();

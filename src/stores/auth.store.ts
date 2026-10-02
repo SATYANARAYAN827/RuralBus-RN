@@ -179,7 +179,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         if (restoredUser) {
           try {
             useNavigationStore.getState().setActiveRole(restoredUser.role, restoredUser);
-            useNavigationStore.getState().setUser(restoredUser);
+            useNavigationStore.getState().login(restoredUser.role, restoredUser);
           } catch {}
         }
       }
@@ -405,3 +405,24 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     });
   },
 }));
+
+// Automatically handle token expiry / unrecoverable 401s across the entire application
+apiClient.setOnSessionExpired(async () => {
+  const state = useAuthStore.getState();
+  if (state.isAuthenticated) {
+    apiClient.setAuthToken(null);
+    apiClient.setRefreshToken(null);
+    await authStorage.clearTokens();
+    try {
+      useNavigationStore.getState().logout();
+    } catch {}
+    useAuthStore.setState({
+      user: null,
+      tokens: null,
+      tenant: null,
+      isAuthenticated: false,
+      error: 'Your session has expired. Please log in again to continue.',
+    });
+  }
+});
+

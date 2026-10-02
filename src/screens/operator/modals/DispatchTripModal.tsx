@@ -33,20 +33,22 @@ export const DispatchTripModal: React.FC = () => {
   const [scheduledArrival, setScheduledArrival] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
 
+  const resetForm = () => {
+    setSelectedRouteId('');
+    setSelectedBusId('');
+    setSelectedDriverId('');
+    setSelectedConductorId('');
+    setDepartureTime('');
+    setScheduledArrival('');
+    setFormError(null);
+  };
+
   useEffect(() => {
     if (isDispatchTripModalOpen) {
+      resetForm();
       if (routes.length === 0) fetchRoutes();
       if (buses.length === 0) fetchBuses();
       if (staff.length === 0) fetchStaff();
-
-      // Pre-fill next hour departure time and arrival in 3 hours
-      const now = new Date();
-      now.setHours(now.getHours() + 1, 0, 0, 0);
-      setDepartureTime(now.toISOString().substring(0, 16));
-
-      const arr = new Date(now);
-      arr.setHours(arr.getHours() + 3);
-      setScheduledArrival(arr.toISOString().substring(0, 16));
     }
   }, [isDispatchTripModalOpen, routes.length, buses.length, staff.length, fetchRoutes, fetchBuses, fetchStaff]);
 
@@ -315,17 +317,19 @@ export const DispatchTripModal: React.FC = () => {
 
         <TextInput
           label="DEPARTURE TIME (YYYY-MM-DDTHH:mm) *"
-          placeholder="2026-09-26T18:00"
+          placeholder="e.g. 2026-09-26T18:00"
           value={departureTime}
           onChangeText={setDepartureTime}
+          autoComplete="off"
           style={{ ...styles.field, marginTop: 14 }}
         />
 
         <TextInput
           label="SCHEDULED ARRIVAL (YYYY-MM-DDTHH:mm) *"
-          placeholder="2026-09-26T21:00"
+          placeholder="e.g. 2026-09-26T21:00"
           value={scheduledArrival}
           onChangeText={setScheduledArrival}
+          autoComplete="off"
           style={styles.field}
         />
       </ScrollView>

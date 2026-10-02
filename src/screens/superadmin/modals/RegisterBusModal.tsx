@@ -239,6 +239,7 @@ export const RegisterBusModal: React.FC<Props> = ({
         value={registrationNumber}
         onChangeText={(text) => setRegistrationNumber(text.toUpperCase())}
         autoCapitalize="characters"
+        autoComplete="off"
       />
 
       {/* Bus Model */}
@@ -247,6 +248,7 @@ export const RegisterBusModal: React.FC<Props> = ({
         placeholder="e.g. Tata Starbus Ultra (AC)"
         value={model}
         onChangeText={setModel}
+        autoComplete="off"
       />
 
       {/* Seating Capacity */}
@@ -256,6 +258,7 @@ export const RegisterBusModal: React.FC<Props> = ({
         value={totalSeats}
         onChangeText={setTotalSeats}
         keyboardType="numeric"
+        autoComplete="off"
       />
 
       {/* Seating Type */}

@@ -4,7 +4,7 @@
  * Authoritative note: Bus status defaults to PENDING_APPROVAL for Operator Admin.
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { Modal, Button, TextInput } from '../../../components/common';
 import { useTheme } from '../../../theme';
@@ -19,10 +19,25 @@ export const AddBusModal: React.FC = () => {
 
   const [regNumber, setRegNumber] = useState('');
   const [model, setModel] = useState('');
-  const [totalSeats, setTotalSeats] = useState('40');
+  const [totalSeats, setTotalSeats] = useState('');
   const [seatingType, setSeatingType] = useState<BusSeatingType>('SEATER_2X2');
-  const [selectedAmenities, setSelectedAmenities] = useState<string[]>(['AC', 'CCTV']);
+  const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
   const [formError, setFormError] = useState<string | null>(null);
+
+  const resetForm = () => {
+    setRegNumber('');
+    setModel('');
+    setTotalSeats('');
+    setSeatingType('SEATER_2X2');
+    setSelectedAmenities([]);
+    setFormError(null);
+  };
+
+  useEffect(() => {
+    if (isAddBusModalOpen) {
+      resetForm();
+    }
+  }, [isAddBusModalOpen]);
 
   // Post-submit pending approval confirmation modal
   const [isPendingModalOpen, setIsPendingModalOpen] = useState(false);
@@ -91,9 +106,7 @@ export const AddBusModal: React.FC = () => {
       setIsPendingModalOpen(true);
 
       // 3. Reset form and close registration modal
-      setRegNumber('');
-      setModel('');
-      setTotalSeats('40');
+      resetForm();
       setIsAddBusModalOpen(false);
     }
   };
@@ -145,6 +158,7 @@ export const AddBusModal: React.FC = () => {
           value={regNumber}
           onChangeText={setRegNumber}
           autoCapitalize="characters"
+          autoComplete="off"
           style={styles.field}
         />
 
@@ -153,15 +167,17 @@ export const AddBusModal: React.FC = () => {
           placeholder="e.g. BharatBenz 1017 AC Coach"
           value={model}
           onChangeText={setModel}
+          autoComplete="off"
           style={styles.field}
         />
 
         <TextInput
           label="TOTAL SEATING CAPACITY (10 - 80) *"
-          placeholder="40"
+          placeholder="e.g. 40"
           value={totalSeats}
           onChangeText={setTotalSeats}
           keyboardType="numeric"
+          autoComplete="off"
           style={styles.field}
         />
 

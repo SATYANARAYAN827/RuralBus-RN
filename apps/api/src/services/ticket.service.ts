@@ -1,4 +1,4 @@
-import crypto from 'node:crypto';
+import * as crypto from 'node:crypto';
 import { and, eq } from 'drizzle-orm';
 import { db, withTenant, withSystemContext, tickets, bookings, trips, users, routes, buses, stops } from '@ruralbus/database';
 import { NotFoundError, BadRequestError, ForbiddenError, ConflictError } from '../errors/AppError.js';

@@ -4,6 +4,11 @@ class ApiClient {
   private token: string | null = null;
   private refreshToken: string | null = null;
   private refreshPromise: Promise<string | null> | null = null;
+  private onSessionExpiredCallback: (() => void) | null = null;
+
+  setOnSessionExpired(callback: (() => void) | null) {
+    this.onSessionExpiredCallback = callback;
+  }
 
   setAuthToken(token: string | null) {
     this.token = token;
@@ -59,9 +64,17 @@ class ApiClient {
 
         // Clear invalid token if refresh was unsuccessful
         this.token = null;
+        this.refreshToken = null;
+        if (this.onSessionExpiredCallback) {
+          this.onSessionExpiredCallback();
+        }
         return null;
       } catch {
         this.token = null;
+        this.refreshToken = null;
+        if (this.onSessionExpiredCallback) {
+          this.onSessionExpiredCallback();
+        }
         return null;
       } finally {
         this.refreshPromise = null;
@@ -143,8 +156,12 @@ class ApiClient {
           }
         }
 
-        if (response.status === 401) {
+        if (response.status === 401 && !endpoint.includes('/auth/login')) {
           this.token = null;
+          this.refreshToken = null;
+          if (this.onSessionExpiredCallback) {
+            this.onSessionExpiredCallback();
+          }
         }
 
         throw new Error(errorMsg);

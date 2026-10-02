@@ -5,6 +5,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Modal,
+  Platform,
 } from 'react-native';
 import { useTheme } from '../../theme';
 import { useAuthStore } from '../../stores/auth.store';
@@ -184,10 +185,16 @@ const styles = StyleSheet.create({
   },
   modalBackdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.55)',
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
+    ...(Platform.OS === 'web'
+      ? ({
+          backdropFilter: 'blur(8px)',
+          WebkitBackdropFilter: 'blur(8px)',
+        } as any)
+      : {}),
   },
   dropdownMenu: {
     width: '100%',

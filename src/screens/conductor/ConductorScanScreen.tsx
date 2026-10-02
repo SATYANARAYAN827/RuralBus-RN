@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   ScrollView,
+  Platform,
 } from 'react-native';
 import { Card, Badge, Button, TextInput } from '../../components/common';
 import { useTheme } from '../../theme';
@@ -25,6 +26,155 @@ export const ConductorScanScreen: React.FC = () => {
   } = useConductorStore();
 
   const [inputError, setInputError] = useState<string | null>(null);
+  const [isCameraActive, setIsCameraActive] = useState<boolean>(false);
+  const [cameraLoading, setCameraLoading] = useState<boolean>(false);
+  const [cameraError, setCameraError] = useState<string | null>(null);
+  const [lastScannedCode, setLastScannedCode] = useState<string | null>(null);
+  const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
+
+  const html5QrCodeRef = useRef<any>(null);
+  const isScanningRef = useRef<boolean>(false);
+
+  // Load Html5Qrcode library dynamically from CDN
+  const loadHtml5QrcodeScript = (onLoaded: () => void) => {
+    if (typeof window === 'undefined') return;
+    if ((window as any).Html5Qrcode) {
+      onLoaded();
+      return;
+    }
+    if (!document.getElementById('html5-qrcode-bundle')) {
+      const script = document.createElement('script');
+      script.id = 'html5-qrcode-bundle';
+      script.src = 'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js';
+      script.async = true;
+      script.onload = () => onLoaded();
+      document.head.appendChild(script);
+    } else {
+      document.getElementById('html5-qrcode-bundle')?.addEventListener('load', onLoaded);
+    }
+  };
+
+  // Play audio beep confirmation upon successful QR scan
+  const playScanBeep = () => {
+    try {
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioContextClass) return;
+      const audioCtx = new AudioContextClass();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(880, audioCtx.currentTime); // 880Hz A5
+      gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.15);
+    } catch {}
+  };
+
+  // Handler when QR is detected from camera stream
+  const handleQrDetected = async (decodedText: string) => {
+    if (!decodedText || isScanningRef.current) return;
+    isScanningRef.current = true;
+    setLastScannedCode(decodedText);
+    setManualTicketInput(decodedText);
+    playScanBeep();
+
+    try {
+      await validateTicket(decodedText.trim());
+    } catch (err: any) {
+      console.warn('Scan auto-validation notice:', err);
+    } finally {
+      // Allow next scan after small debounce
+      setTimeout(() => {
+        isScanningRef.current = false;
+      }, 2000);
+    }
+  };
+
+  // Start real camera stream
+  const startCamera = () => {
+    setCameraLoading(true);
+    setCameraError(null);
+
+    loadHtml5QrcodeScript(async () => {
+      try {
+        const Html5QrcodeClass = (window as any).Html5Qrcode;
+        if (!Html5QrcodeClass) {
+          throw new Error('QR Scanner engine could not be loaded');
+        }
+
+        const readerId = 'conductor-camera-viewport';
+        if (!document.getElementById(readerId)) {
+          throw new Error('Camera viewport element not ready');
+        }
+
+        if (html5QrCodeRef.current) {
+          try {
+            await html5QrCodeRef.current.stop();
+          } catch {}
+        }
+
+        const scanner = new Html5QrcodeClass(readerId);
+        html5QrCodeRef.current = scanner;
+
+        const config = {
+          fps: 15,
+          qrbox: { width: 240, height: 240 },
+          aspectRatio: 1.0,
+        };
+
+        await scanner.start(
+          { facingMode },
+          config,
+          (decodedText: string) => {
+            handleQrDetected(decodedText);
+          },
+          () => {
+            // Frame miss, normal loop
+          }
+        );
+
+        setIsCameraActive(true);
+      } catch (err: any) {
+        console.error('Camera startup error:', err);
+        setCameraError(
+          err?.message || 'Camera permission denied or camera not found on this device.'
+        );
+        setIsCameraActive(false);
+      } finally {
+        setCameraLoading(false);
+      }
+    });
+  };
+
+  // Stop camera stream
+  const stopCamera = async () => {
+    if (html5QrCodeRef.current) {
+      try {
+        if (html5QrCodeRef.current.isScanning) {
+          await html5QrCodeRef.current.stop();
+        }
+        html5QrCodeRef.current.clear();
+      } catch {}
+      html5QrCodeRef.current = null;
+    }
+    setIsCameraActive(false);
+  };
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (html5QrCodeRef.current) {
+        try {
+          if (html5QrCodeRef.current.isScanning) {
+            html5QrCodeRef.current.stop();
+          }
+        } catch {}
+      }
+    };
+  }, []);
 
   const handleValidate = async () => {
     if (!manualTicketInput.trim()) {
@@ -72,9 +222,9 @@ export const ConductorScanScreen: React.FC = () => {
         <Badge variant="mint" label="ONLINE HUD" />
       </Card>
 
-      {/* 2. Camera QR Reticle Viewfinder Simulation / Native Camera HUD */}
+      {/* 2. Real Camera QR Reticle Viewfinder */}
       <Card
-        padding={20}
+        padding={18}
         style={[
           styles.reticleCard,
           {
@@ -84,33 +234,105 @@ export const ConductorScanScreen: React.FC = () => {
         ]}
       >
         <View style={styles.reticleHeader}>
-          <Badge variant="info" label="CAMERA VIEWFINDER" />
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Badge
+              variant={isCameraActive ? 'success' : 'neutral'}
+              label={isCameraActive ? '● CAMERA LIVE' : 'CAMERA STANDBY'}
+            />
+            {isCameraActive && (
+              <Badge variant="mint" label={`MODE: ${facingMode.toUpperCase()}`} size="sm" />
+            )}
+          </View>
           <Text style={styles.busBadgeText}>
             {activeTrip?.busRegistrationNumber || 'Commercial Bus'}
           </Text>
         </View>
 
-        {/* Viewfinder Target Frame */}
-        <View style={styles.viewfinderContainer}>
-          <View style={styles.viewfinderFrame}>
-            {/* 4 Glowing Corner Brackets */}
-            <View style={[styles.cornerBracket, styles.topLeft]} />
-            <View style={[styles.cornerBracket, styles.topRight]} />
-            <View style={[styles.cornerBracket, styles.bottomLeft]} />
-            <View style={[styles.cornerBracket, styles.bottomRight]} />
+        {/* Live Camera Viewport DOM Container */}
+        <View style={styles.cameraViewportWrapper}>
+          {Platform.OS === 'web' ? (
+            <div
+              id="conductor-camera-viewport"
+              style={{
+                width: '100%',
+                maxWidth: 420,
+                minHeight: isCameraActive ? 280 : 0,
+                borderRadius: 14,
+                overflow: 'hidden',
+                backgroundColor: '#000000',
+                display: isCameraActive ? 'block' : 'none',
+              }}
+            />
+          ) : null}
 
-            {/* Scanning Line Indicator */}
-            <View style={styles.scanLine} />
+          {/* If Camera is not active, show the Scanner Reticle & Launch Button */}
+          {!isCameraActive && (
+            <View style={styles.viewfinderContainer}>
+              <View style={styles.viewfinderFrame}>
+                <View style={[styles.cornerBracket, styles.topLeft]} />
+                <View style={[styles.cornerBracket, styles.topRight]} />
+                <View style={[styles.cornerBracket, styles.bottomLeft]} />
+                <View style={[styles.cornerBracket, styles.bottomRight]} />
 
-            <Text style={styles.reticleInstructions}>
-              Align Passenger QR within frame
-            </Text>
-          </View>
+                <Text style={{ fontSize: 36, marginBottom: 8 }}>📷</Text>
+                <Text style={styles.reticleInstructions}>
+                  Ready to scan passenger QR ticket
+                </Text>
+              </View>
+            </View>
+          )}
+
+          {/* Camera Error Alert */}
+          {cameraError && (
+            <View style={styles.cameraErrorBanner}>
+              <Text style={styles.cameraErrorText}>⚠️ {cameraError}</Text>
+            </View>
+          )}
         </View>
 
-        <Text style={styles.hardwareNote}>
-          Hardware Camera Interface: On physical device builds with camera permissions granted, the live camera stream actively scans tickets. Use the manual validator below for direct PNR lookup or in automated environments.
-        </Text>
+        {/* Scanner Control Actions */}
+        <View style={styles.cameraControlsRow}>
+          {!isCameraActive ? (
+            <Button
+              title={cameraLoading ? 'Starting Camera...' : '📷 Start Live Camera Scanner'}
+              variant="mint"
+              size="md"
+              onPress={startCamera}
+              isLoading={cameraLoading}
+              style={{ minWidth: 200 }}
+            />
+          ) : (
+            <View style={{ flexDirection: 'row', gap: 10, flexWrap: 'wrap' }}>
+              <Button
+                title="⏹ Stop Camera"
+                variant="outline"
+                size="md"
+                onPress={stopCamera}
+              />
+              <Button
+                title={facingMode === 'environment' ? '🔄 Switch to Front' : '🔄 Switch to Back'}
+                variant="secondary"
+                size="md"
+                onPress={() => {
+                  const newMode = facingMode === 'environment' ? 'user' : 'environment';
+                  setFacingMode(newMode);
+                  stopCamera().then(() => {
+                    setTimeout(() => startCamera(), 200);
+                  });
+                }}
+              />
+            </View>
+          )}
+        </View>
+
+        {lastScannedCode && (
+          <View style={styles.lastScannedBadge}>
+            <Text style={styles.lastScannedLabel}>LAST SCANNED PAYLOAD:</Text>
+            <Text style={styles.lastScannedText} numberOfLines={1}>
+              {lastScannedCode}
+            </Text>
+          </View>
+        )}
       </Card>
 
       {/* 3. Manual PNR / Ticket ID Input */}
@@ -260,6 +482,58 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
   },
+  cameraViewportWrapper: {
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+    marginVertical: 4,
+  },
+  cameraControlsRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 6,
+    width: '100%',
+  },
+  cameraErrorBanner: {
+    marginTop: 10,
+    padding: 10,
+    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.4)',
+    borderRadius: 8,
+    width: '100%',
+    maxWidth: 420,
+  },
+  cameraErrorText: {
+    color: '#f87171',
+    fontSize: 12,
+    textAlign: 'center',
+    fontWeight: '600',
+  },
+  lastScannedBadge: {
+    width: '100%',
+    maxWidth: 420,
+    backgroundColor: 'rgba(0, 212, 136, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 212, 136, 0.3)',
+    borderRadius: 8,
+    padding: 8,
+    marginTop: 4,
+  },
+  lastScannedLabel: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: '#00D488',
+    letterSpacing: 0.5,
+    marginBottom: 2,
+  },
+  lastScannedText: {
+    fontSize: 11,
+    fontFamily: Platform.OS === 'web' ? 'monospace' : undefined,
+    color: '#ffffff',
+  },
   viewfinderContainer: {
     width: '100%',
     alignItems: 'center',
@@ -310,29 +584,12 @@ const styles = StyleSheet.create({
     borderRightWidth: 3,
     borderBottomRightRadius: 12,
   },
-  scanLine: {
-    width: '85%',
-    height: 2,
-    backgroundColor: '#00D488',
-    shadowColor: '#00D488',
-    shadowOpacity: 0.8,
-    shadowRadius: 6,
-    elevation: 4,
-    marginBottom: 8,
-  },
   reticleInstructions: {
     color: 'rgba(255, 255, 255, 0.7)',
     fontSize: 11,
     fontWeight: '700',
     textAlign: 'center',
-    marginTop: 10,
-  },
-  hardwareNote: {
-    color: '#94a3b8',
-    fontSize: 11,
-    lineHeight: 16,
-    textAlign: 'center',
-    maxWidth: 520,
+    marginTop: 4,
   },
   inputCard: {
     borderRadius: 12,

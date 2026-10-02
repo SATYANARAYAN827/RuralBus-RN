@@ -1,4 +1,4 @@
-﻿{
+{
   "name": "@ruralbus/database",
   "version": "0.1.0",
   "private": true,
@@ -15,6 +15,7 @@
     "db:seed": "tsx src/seeds/index.ts",
     "setup:demo": "tsx src/seeds/setup-demo-travel.ts",
     "db:reset": "tsx src/reset.ts",
+    "db:clean": "tsx src/scripts/clean-database.ts",
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {

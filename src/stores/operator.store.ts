@@ -128,9 +128,11 @@ interface OperatorState {
   setIsEditBusModalOpen: (open: boolean) => void;
   editingBus: FleetBus | null;
   setEditingBus: (bus: FleetBus | null) => void;
-
   isAddStaffModalOpen: boolean;
   setIsAddStaffModalOpen: (open: boolean) => void;
+  addStaffInitialRole: 'DRIVER' | 'CONDUCTOR';
+  addStaffInitialBusId: string | null;
+  openAddStaffModalWithDefaults: (role?: 'DRIVER' | 'CONDUCTOR', busId?: string | null) => void;
   isEditStaffModalOpen: boolean;
   setIsEditStaffModalOpen: (open: boolean) => void;
   editingStaff: StaffMember | null;
@@ -511,6 +513,15 @@ export const useOperatorStore = create<OperatorState>((set, get) => ({
 
   isAddStaffModalOpen: false,
   setIsAddStaffModalOpen: (open) => set({ isAddStaffModalOpen: open }),
+  addStaffInitialRole: 'DRIVER',
+  addStaffInitialBusId: null,
+  openAddStaffModalWithDefaults: (role, busId) => {
+    set({
+      addStaffInitialRole: role || 'DRIVER',
+      addStaffInitialBusId: busId !== undefined ? busId : null,
+      isAddStaffModalOpen: true,
+    });
+  },
   isEditStaffModalOpen: false,
   setIsEditStaffModalOpen: (open) => set({ isEditStaffModalOpen: open }),
   editingStaff: null,

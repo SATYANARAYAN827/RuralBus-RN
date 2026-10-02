@@ -22,6 +22,8 @@ import {
   DriverHistoryResponse,
   GpsPingInput,
   GpsPingResponse,
+  TripTrajectoryResponse,
+  LiveVehicleStateResponse,
 } from '../types';
 
 export class DriverService {
@@ -112,6 +114,42 @@ export class DriverService {
       payload
     );
     return res.data;
+  }
+
+  /**
+   * Retrieves authoritative trip trajectory (historical breadcrumbs / crossed roads).
+   * Backend: GET /api/v1/trips/:tripId/trajectory
+   * Guarded: Only queries backend when tripId is a valid UUID, preventing 400s on standby duty IDs.
+   */
+  async getTripTrajectory(tripId: string): Promise<TripTrajectoryResponse | null> {
+    const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!tripId || !UUID_REGEX.test(tripId)) return null;
+    try {
+      const res = await apiClient.get<{ success: boolean; data: TripTrajectoryResponse }>(
+        API_CONFIG.ENDPOINTS.TRIP_TRAJECTORY(tripId)
+      );
+      return (res.data as any)?.data || res.data;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Retrieves authoritative live vehicle state and GPS freshness.
+   * Backend: GET /api/v1/tracking/trip/:tripId/state
+   * Guarded: Only queries backend when tripId is a valid UUID, preventing 400s on standby duty IDs.
+   */
+  async getTripLiveState(tripId: string): Promise<LiveVehicleStateResponse | null> {
+    const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!tripId || !UUID_REGEX.test(tripId)) return null;
+    try {
+      const res = await apiClient.get<{ success: boolean; data: LiveVehicleStateResponse }>(
+        API_CONFIG.ENDPOINTS.TRIP_STATE(tripId)
+      );
+      return (res.data as any)?.data || res.data;
+    } catch {
+      return null;
+    }
   }
 }
 

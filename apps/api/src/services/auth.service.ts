@@ -46,7 +46,7 @@ async function resolveUserRoleAndTenant(userId: string, defaultRole: AppUserRole
   tenantId: string | null;
 }> {
   return withSystemContext(async (tx) => {
-    // 1. First check if user is a member of an operator
+    // 1. First check if user is a member of an active operator
     const members = await tx
       .select({
         memberRole: schema.operatorMembers.role,
@@ -73,19 +73,14 @@ async function resolveUserRoleAndTenant(userId: string, defaultRole: AppUserRole
       };
     }
 
-    // 2. Check operator_members without join in case operator was deactivated or modified
+    // 2. Check operator_members without join
     const rawMembers = await tx
       .select({
         memberRole: schema.operatorMembers.role,
         tenantId: schema.operatorMembers.tenantId,
       })
       .from(schema.operatorMembers)
-      .where(
-        and(
-          eq(schema.operatorMembers.userId, userId),
-          eq(schema.operatorMembers.isActive, true)
-        )
-      )
+      .where(eq(schema.operatorMembers.userId, userId))
       .limit(1);
 
     if (rawMembers.length > 0) {
@@ -95,7 +90,109 @@ async function resolveUserRoleAndTenant(userId: string, defaultRole: AppUserRole
       };
     }
 
-    // 3. Preserve the explicit stored role from users table (DRIVER, CONDUCTOR, OPERATOR_ADMIN, etc.)
+    // 3. Check if user's phone or email matches an operator's contact details
+    const [usr] = await tx
+      .select({ fullName: schema.users.fullName, phone: schema.users.phone, email: schema.users.email })
+      .from(schema.users)
+      .where(eq(schema.users.id, userId))
+      .limit(1);
+
+    if (usr) {
+      const orConds = [];
+      if (usr.phone) orConds.push(eq(schema.operators.contactPhone, usr.phone));
+      if (usr.email) orConds.push(eq(schema.operators.contactEmail, usr.email));
+      if (orConds.length > 0) {
+        const [matchedOp] = await tx
+          .select({ id: schema.operators.id })
+          .from(schema.operators)
+          .where(or(...orConds))
+          .limit(1);
+
+        if (matchedOp?.id) {
+          try {
+            await tx
+              .insert(schema.operatorMembers)
+              .values({
+                userId,
+                tenantId: matchedOp.id,
+                role: defaultRole as any,
+                isActive: true,
+              });
+          } catch {}
+          return {
+            role: defaultRole,
+            tenantId: matchedOp.id,
+          };
+        }
+      }
+    }
+
+    // 4. If user is an OPERATOR_ADMIN without an operator, create their own dedicated company
+    if (defaultRole === 'OPERATOR_ADMIN') {
+      const companyName = usr?.fullName ? `${usr.fullName} Transport` : 'Rural Bus Transport';
+      const baseCode = usr?.phone ? `OP-${usr.phone.slice(-6)}` : `OP-${Math.floor(1000 + Math.random() * 9000)}`;
+      const contactPhone = usr?.phone || '9876543999';
+      const contactEmail = usr?.email || `${contactPhone}@ruralbus.local`;
+
+      const [newOp] = await tx
+        .insert(schema.operators)
+        .values({
+          companyName,
+          businessCode: baseCode,
+          contactPhone,
+          contactEmail,
+          corridor: 'State Rural Corridor',
+          status: 'ACTIVE',
+        })
+        .returning();
+
+      if (newOp?.id) {
+        try {
+          await tx
+            .insert(schema.operatorMembers)
+            .values({
+              userId,
+              tenantId: newOp.id,
+              role: 'OPERATOR_ADMIN',
+              isActive: true,
+            });
+        } catch {}
+
+        return {
+          role: 'OPERATOR_ADMIN',
+          tenantId: newOp.id,
+        };
+      }
+    }
+
+    // 5. Fallback for drivers/conductors to their linked active operator
+    if (defaultRole === 'DRIVER' || defaultRole === 'CONDUCTOR') {
+      const [firstOp] = await tx
+        .select({ id: schema.operators.id })
+        .from(schema.operators)
+        .where(eq(schema.operators.status, 'ACTIVE'))
+        .limit(1);
+
+      if (firstOp) {
+        try {
+          await tx
+            .insert(schema.operatorMembers)
+            .values({
+              userId,
+              tenantId: firstOp.id,
+              role: defaultRole as any,
+              isActive: true,
+            });
+        } catch {}
+
+        return {
+          role: defaultRole,
+          tenantId: firstOp.id,
+        };
+      }
+    }
+
+    // 5. Preserve explicit role for platform admin / passengers
     return {
       role: defaultRole,
       tenantId: null,

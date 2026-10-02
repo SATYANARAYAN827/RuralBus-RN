@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { Modal, Button, TextInput } from '../../../components/common';
 import { useTheme } from '../../../theme';
@@ -22,9 +22,20 @@ export const AddOperatorModal: React.FC<Props> = ({ isOpen, onClose }) => {
   const [validationError, setValidationError] = useState<string | null>(null);
 
   const reset = () => {
-    setCompanyName(''); setOwnerName(''); setPhone(''); setEmail('');
-    setPassword(''); setBusinessCode(''); setValidationError(null);
+    setCompanyName('');
+    setOwnerName('');
+    setPhone('');
+    setEmail('');
+    setPassword('');
+    setBusinessCode('');
+    setValidationError(null);
   };
+
+  useEffect(() => {
+    if (isOpen) {
+      reset();
+    }
+  }, [isOpen]);
 
   const handleSubmit = async () => {
     setValidationError(null);
@@ -94,12 +105,52 @@ export const AddOperatorModal: React.FC<Props> = ({ isOpen, onClose }) => {
         </Text>
       </View>
 
-      <TextInput label="COMPANY NAME *" placeholder="e.g. Odisha State Bus Corp" value={companyName} onChangeText={setCompanyName} />
-      <TextInput label="OWNER FULL NAME *" placeholder="e.g. Ramesh Patel" value={ownerName} onChangeText={setOwnerName} />
-      <TextInput label="OWNER MOBILE (10-DIGIT) *" placeholder="e.g. 9876543210" value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
-      <TextInput label="OWNER EMAIL (OPTIONAL)" placeholder="e.g. owner@company.in" value={email} onChangeText={setEmail} keyboardType="email-address" />
-      <TextInput label="INITIAL PASSWORD *" placeholder="Min. 8 characters" value={password} onChangeText={setPassword} secureTextEntry leftIcon="🔒" />
-      <TextInput label="BUSINESS CODE (OPTIONAL)" placeholder="Auto-generated if blank" value={businessCode} onChangeText={setBusinessCode} />
+      <TextInput
+        label="COMPANY NAME *"
+        placeholder="e.g. Odisha State Bus Corp"
+        value={companyName}
+        onChangeText={setCompanyName}
+        autoComplete="off"
+      />
+      <TextInput
+        label="OWNER FULL NAME *"
+        placeholder="e.g. Ramesh Patel"
+        value={ownerName}
+        onChangeText={setOwnerName}
+        autoComplete="off"
+      />
+      <TextInput
+        label="OWNER MOBILE (10-DIGIT) *"
+        placeholder="e.g. 9876543210"
+        value={phone}
+        onChangeText={setPhone}
+        keyboardType="phone-pad"
+        autoComplete="off"
+      />
+      <TextInput
+        label="OWNER EMAIL (OPTIONAL)"
+        placeholder="e.g. owner@company.in"
+        value={email}
+        onChangeText={setEmail}
+        keyboardType="email-address"
+        autoComplete="off"
+      />
+      <TextInput
+        label="INITIAL PASSWORD *"
+        placeholder="Min. 8 characters"
+        value={password}
+        onChangeText={setPassword}
+        secureTextEntry
+        autoComplete="new-password"
+        leftIcon="🔒"
+      />
+      <TextInput
+        label="BUSINESS CODE (OPTIONAL)"
+        placeholder="Auto-generated if blank"
+        value={businessCode}
+        onChangeText={setBusinessCode}
+        autoComplete="off"
+      />
     </Modal>
   );
 };

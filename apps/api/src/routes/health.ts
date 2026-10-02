@@ -2,6 +2,14 @@ import { FastifyInstance, FastifyPluginAsync } from 'fastify';
 import { env } from '../config/env.js';
 
 export const healthRoutes: FastifyPluginAsync = async (app: FastifyInstance) => {
+  app.get('/health', async (_request, reply) => {
+    return reply.status(200).send({
+      status: 'ok',
+      version: '0.1.0',
+      timestamp: new Date().toISOString(),
+    });
+  });
+
   /**
    * Liveness Probe
    * Used by Kubernetes / Docker / load balancers to determine if the container process is alive.

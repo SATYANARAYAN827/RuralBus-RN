@@ -4,15 +4,23 @@
  * Security: Passwords are encrypted over HTTPS; zero plaintext passwords persisted or logged.
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
-import { Modal, Button, TextInput } from '../../../components/common';
+import { Modal, Button, TextInput, DropdownSelect } from '../../../components/common';
 import { useTheme } from '../../../theme';
 import { useOperatorStore } from '../../../stores/operator.store';
 
 export const AddStaffModal: React.FC = () => {
   const { colors, isLight } = useTheme();
-  const { isAddStaffModalOpen, setIsAddStaffModalOpen, createStaff, buses, isLoadingStaff } = useOperatorStore();
+  const {
+    isAddStaffModalOpen,
+    setIsAddStaffModalOpen,
+    addStaffInitialRole,
+    addStaffInitialBusId,
+    createStaff,
+    buses,
+    isLoadingStaff,
+  } = useOperatorStore();
 
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
@@ -21,6 +29,22 @@ export const AddStaffModal: React.FC = () => {
   const [password, setPassword] = useState('');
   const [selectedBusId, setSelectedBusId] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
+
+  const resetForm = () => {
+    setFullName('');
+    setPhone('');
+    setEmail('');
+    setRole(addStaffInitialRole || 'DRIVER');
+    setPassword('');
+    setSelectedBusId(addStaffInitialBusId || null);
+    setFormError(null);
+  };
+
+  useEffect(() => {
+    if (isAddStaffModalOpen) {
+      resetForm();
+    }
+  }, [isAddStaffModalOpen, addStaffInitialRole, addStaffInitialBusId]);
 
   const activeBuses = buses.filter((b) => b.status === 'ACTIVE');
 
@@ -52,11 +76,7 @@ export const AddStaffModal: React.FC = () => {
     });
 
     if (success) {
-      setFullName('');
-      setPhone('');
-      setEmail('');
-      setPassword('');
-      setSelectedBusId(null);
+      resetForm();
       setIsAddStaffModalOpen(false);
     }
   };
@@ -155,6 +175,7 @@ export const AddStaffModal: React.FC = () => {
           placeholder="e.g. Ramesh Kumar Sahoo"
           value={fullName}
           onChangeText={setFullName}
+          autoComplete="off"
           style={styles.field}
         />
 
@@ -165,6 +186,7 @@ export const AddStaffModal: React.FC = () => {
           onChangeText={setPhone}
           keyboardType="phone-pad"
           maxLength={10}
+          autoComplete="off"
           style={styles.field}
         />
 
@@ -175,6 +197,7 @@ export const AddStaffModal: React.FC = () => {
           onChangeText={setEmail}
           keyboardType="email-address"
           autoCapitalize="none"
+          autoComplete="off"
           style={styles.field}
         />
 
@@ -184,64 +207,33 @@ export const AddStaffModal: React.FC = () => {
           value={password}
           onChangeText={setPassword}
           secureTextEntry
+          autoComplete="new-password"
           style={styles.field}
         />
 
-        <Text style={[styles.fieldLabel, { color: colors.textSecondary, marginTop: 4 }]}>
-          ASSIGN INITIAL BUS (OPTIONAL)
-        </Text>
-        <View style={styles.pillRow}>
-          <TouchableOpacity
-            style={[
-              styles.pill,
-              {
-                backgroundColor: selectedBusId === null
-                  ? '#00D488'
-                  : isLight
-                  ? '#f1f5f9'
-                  : 'rgba(255,255,255,0.08)',
-              },
-            ]}
-            onPress={() => setSelectedBusId(null)}
-          >
-            <Text
-              style={[
-                styles.pillText,
-                { color: selectedBusId === null ? '#000000' : colors.textPrimary },
-              ]}
-            >
-              None (Unassigned)
-            </Text>
-          </TouchableOpacity>
-          {activeBuses.map((b) => {
-            const isSelected = selectedBusId === b.id;
-            return (
-              <TouchableOpacity
-                key={b.id}
-                style={[
-                  styles.pill,
-                  {
-                    backgroundColor: isSelected
-                      ? '#00D488'
-                      : isLight
-                      ? '#f1f5f9'
-                      : 'rgba(255,255,255,0.08)',
-                  },
-                ]}
-                onPress={() => setSelectedBusId(b.id)}
-              >
-                <Text
-                  style={[
-                    styles.pillText,
-                    { color: isSelected ? '#000000' : colors.textPrimary },
-                  ]}
-                >
-                  🚌 {b.registrationNumber || b.model}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
+        <DropdownSelect
+          label="ASSIGN INITIAL BUS (OPTIONAL)"
+          placeholder="None (Unassigned)"
+          searchPlaceholder="Search bus number (e.g. TEST-01)..."
+          searchable={true}
+          value={selectedBusId}
+          options={[
+            {
+              value: null,
+              label: 'None (Unassigned)',
+              icon: '🚫',
+              sublabel: 'Crew member will be ready in standby pool for fleet dispatch',
+            },
+            ...activeBuses.map((b) => ({
+              value: b.id,
+              label: `${b.registrationNumber || 'No Reg'} (${b.model})`,
+              icon: '🚌',
+              sublabel: `${b.totalSeats} Seats • ${b.seatingType?.replace('_', ' ') || '2x2 Layout'}`,
+            })),
+          ]}
+          onChange={(val) => setSelectedBusId(val)}
+          style={styles.field}
+        />
       </ScrollView>
     </Modal>
   );

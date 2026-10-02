@@ -82,24 +82,23 @@ class SecureAuthStorage {
 
   /**
    * Stores tokens according to platform security policy:
-   * - Web: Memory only.
+   * - Web: In-memory + sessionStorage (active browser tab lifetime).
    * - Native (Android/iOS): Hardware-backed expo-secure-store (KeyStore / Keychain).
    */
   async setTokens(tokens: AuthTokens | null): Promise<void> {
     this.memoryTokens = tokens;
 
-    // Safety enforcement: ensure no tokens ever exist in browser localStorage or sessionStorage
-    if (typeof window !== 'undefined') {
+    // Web: persist in sessionStorage for current tab reload lifecycle
+    if (typeof window !== 'undefined' && window.sessionStorage) {
       try {
-        if (window.localStorage) {
-          localStorage.removeItem('ruralbus_token');
-          localStorage.removeItem('ruralbus_access_token');
-          localStorage.removeItem('ruralbus_refresh_token');
-        }
-        if (window.sessionStorage) {
-          sessionStorage.removeItem('ruralbus_token');
-          sessionStorage.removeItem('ruralbus_access_token');
-          sessionStorage.removeItem('ruralbus_refresh_token');
+        if (tokens?.accessToken) {
+          sessionStorage.setItem('ruralbus_session_access_token', tokens.accessToken);
+          if (tokens.refreshToken) {
+            sessionStorage.setItem('ruralbus_session_refresh_token', tokens.refreshToken);
+          }
+        } else {
+          sessionStorage.removeItem('ruralbus_session_access_token');
+          sessionStorage.removeItem('ruralbus_session_refresh_token');
         }
       } catch {}
     }
@@ -129,12 +128,27 @@ class SecureAuthStorage {
 
   /**
    * Retrieves tokens:
-   * - Web: Memory only.
+   * - Web: In-memory cache or sessionStorage.
    * - Native (Android/iOS): In-memory cache, restoring from expo-secure-store if not in memory.
    */
   async getTokens(): Promise<AuthTokens | null> {
     if (this.memoryTokens) {
       return this.memoryTokens;
+    }
+
+    // On web, restore from active tab sessionStorage
+    if (typeof window !== 'undefined' && window.sessionStorage) {
+      try {
+        const accessToken = sessionStorage.getItem('ruralbus_session_access_token');
+        const refreshToken = sessionStorage.getItem('ruralbus_session_refresh_token');
+        if (accessToken) {
+          this.memoryTokens = {
+            accessToken,
+            refreshToken: refreshToken || undefined,
+          };
+          return this.memoryTokens;
+        }
+      } catch {}
     }
 
     // On native mobile, restore from secure store
@@ -167,20 +181,11 @@ class SecureAuthStorage {
   async clearTokens(): Promise<void> {
     this.memoryTokens = null;
 
-    // Purge browser storage if on web
-    if (typeof window !== 'undefined') {
+    // Purge browser sessionStorage if on web
+    if (typeof window !== 'undefined' && window.sessionStorage) {
       try {
-        if (window.localStorage) {
-          localStorage.removeItem('ruralbus_token');
-          localStorage.removeItem('ruralbus_access_token');
-          localStorage.removeItem('ruralbus_refresh_token');
-          localStorage.removeItem('ruralbus_user');
-        }
-        if (window.sessionStorage) {
-          sessionStorage.removeItem('ruralbus_token');
-          sessionStorage.removeItem('ruralbus_access_token');
-          sessionStorage.removeItem('ruralbus_refresh_token');
-        }
+        sessionStorage.removeItem('ruralbus_session_access_token');
+        sessionStorage.removeItem('ruralbus_session_refresh_token');
       } catch {}
     }
 

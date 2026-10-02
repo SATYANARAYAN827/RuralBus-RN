@@ -21,12 +21,15 @@ export function createDatabaseClient(connectionString?: string): DatabaseInstanc
     process.env.DATABASE_URL ||
     'postgresql://ruralbus_app:app_secure_password@localhost:5432/ruralbus';
 
+  const isLocal = url.includes('localhost') || url.includes('127.0.0.1');
+
   if (!pool) {
     pool = new Pool({
       connectionString: url,
       max: 20,
       idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 5000,
+      connectionTimeoutMillis: 10000,
+      ssl: isLocal ? false : { rejectUnauthorized: false },
     });
   }
 

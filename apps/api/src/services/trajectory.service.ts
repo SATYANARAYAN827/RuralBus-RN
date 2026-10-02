@@ -247,6 +247,22 @@ export async function getTripTrajectory(
       .where(and(eq(tripTrajectories.tripId, tripId), eq(tripTrajectories.tenantId, tenantId)));
 
     if (!record) {
+      const liveBuffer = trajectoryBuffers.get(tripId);
+      if (liveBuffer && liveBuffer.length > 0) {
+        return {
+          tripId,
+          totalDistanceKm: 0,
+          totalPoints: liveBuffer.length,
+          simplifiedPoints: liveBuffer.length,
+          compressionRatioPercent: 0,
+          polyline: liveBuffer.map((p) => ({
+            latitude: p.latitude,
+            longitude: p.longitude,
+            timestamp: p.timestamp,
+          })),
+          completedAt: new Date().toISOString(),
+        };
+      }
       throw new NotFoundError('Trajectory not found for this trip');
     }
 

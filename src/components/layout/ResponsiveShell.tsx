@@ -101,7 +101,7 @@ export const ResponsiveShell: React.FC<ResponsiveShellProps> = ({
         )}
 
         {/* Mobile Sliding Drawer (Rendered as Modal Overlay on < 768px for non-passenger roles) */}
-        {isMobile && roleBadge !== 'PASSENGER' && (
+        {isMobile && roleBadge !== 'PASSENGER' && isMobileNavOpen && (
           <MobileDrawer
             isOpen={isMobileNavOpen}
             onClose={onCloseMobileNav}

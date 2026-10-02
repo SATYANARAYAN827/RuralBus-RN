@@ -192,7 +192,8 @@ export async function provisionStaffMember(
     }
 
     // 2. Hash password with Argon2id (default Admin@123 for any uncreated password)
-    const rawPassword = input.password && input.password.trim().length >= 8 ? input.password.trim() : 'Admin@123';
+    const hasCustomPassword = Boolean(input.password && input.password.trim().length >= 8);
+    const rawPassword = hasCustomPassword ? input.password!.trim() : 'Admin@123';
     const passwordHash = await hashPassword(rawPassword);
     const developmentPassword = getDevelopmentPassword(rawPassword);
 
@@ -207,7 +208,7 @@ export async function provisionStaffMember(
         developmentPassword,
         role: input.role,
         isActive: true,
-        mustChangePassword: true,
+        mustChangePassword: !hasCustomPassword,
         phoneVerified: false,
       })
       .returning();

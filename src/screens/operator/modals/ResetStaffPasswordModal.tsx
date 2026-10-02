@@ -4,7 +4,7 @@
  * Invariant: Never displays old or existing passwords; resets via Argon2id on backend.
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Modal, Button, TextInput } from '../../../components/common';
 import { useOperatorStore } from '../../../stores/operator.store';
@@ -23,6 +23,15 @@ export const ResetStaffPasswordModal: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isResetPasswordModalOpen) {
+      setNewPassword('');
+      setConfirmPassword('');
+      setErrorMsg(null);
+      setSuccessMsg(null);
+    }
+  }, [isResetPasswordModalOpen]);
 
   const handleReset = async () => {
     if (!resetPasswordStaff) return;
@@ -116,6 +125,7 @@ export const ResetStaffPasswordModal: React.FC = () => {
           value={newPassword}
           onChangeText={setNewPassword}
           secureTextEntry
+          autoComplete="new-password"
           style={styles.field}
         />
 
@@ -125,6 +135,7 @@ export const ResetStaffPasswordModal: React.FC = () => {
           value={confirmPassword}
           onChangeText={setConfirmPassword}
           secureTextEntry
+          autoComplete="new-password"
           style={styles.field}
         />
       </View>

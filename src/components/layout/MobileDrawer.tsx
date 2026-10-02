@@ -4,8 +4,8 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  Modal,
   ScrollView,
+  Platform,
 } from 'react-native';
 import { useTheme } from '../../theme';
 import { NavItem, UserProfile } from '../../types';
@@ -39,12 +39,12 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
   user,
   onLogout,
 }) => {
-  if (!isOpen) return null;
-
   const { isLight, colors } = useTheme();
   const authStore = useAuthStore();
   const effectiveUser = authStore.user || user;
   const isSuperAdmin = effectiveUser?.role === 'PLATFORM_ADMIN';
+
+  if (!isOpen) return null;
 
   const drawerBg = isLight
     ? '#ffffff'
@@ -84,19 +84,13 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
     : 'RB';
 
   return (
-    <Modal
-      visible={isOpen}
-      transparent
-      animationType="fade"
-      onRequestClose={onClose}
-    >
-      <View style={styles.backdrop}>
-        {/* Fullscreen dismiss overlay */}
-        <TouchableOpacity
-          style={StyleSheet.absoluteFillObject}
-          activeOpacity={1}
-          onPress={onClose}
-        />
+    <View style={styles.backdrop}>
+      {/* Fullscreen dismiss overlay */}
+      <TouchableOpacity
+        style={StyleSheet.absoluteFillObject}
+        activeOpacity={1}
+        onPress={onClose}
+      />
 
         {/* Sliding Menu Drawer */}
         <View
@@ -329,15 +323,25 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
           </View>
         </View>
       </View>
-    </Modal>
   );
 };
 
 const styles = StyleSheet.create({
   backdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.65)',
+    position: (Platform.OS === 'web' ? 'fixed' : 'absolute') as any,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 9999,
+    backgroundColor: 'rgba(0, 0, 0, 0.60)',
     flexDirection: 'row',
+    ...(Platform.OS === 'web'
+      ? ({
+          backdropFilter: 'blur(8px)',
+          WebkitBackdropFilter: 'blur(8px)',
+        } as any)
+      : {}),
   },
   drawer: {
     width: 290,

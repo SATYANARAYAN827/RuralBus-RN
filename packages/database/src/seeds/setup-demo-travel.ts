@@ -219,8 +219,8 @@ export function getOperatorConfig(): OperatorConfig {
 
   // Default test phones are only suggested for Demo Travel testing, not hardcoded for all operators
   const preferredOwnerPhone = explicitOwnerPhone || (isDemoTravel ? '9861465410' : undefined);
-  const preferredDriverPhone = explicitDriverPhone || (isDemoTravel ? '8018174171' : undefined);
-  const preferredConductorPhone = explicitConductorPhone || (isDemoTravel ? '6371289527' : undefined);
+  const preferredDriverPhone = explicitDriverPhone || (isDemoTravel ? '9876543202' : undefined);
+  const preferredConductorPhone = explicitConductorPhone || (isDemoTravel ? '9876543203' : undefined);
   const preferredPassengerPhone = explicitPassengerPhone || (isDemoTravel ? '7381319957' : undefined);
 
   const corridor =

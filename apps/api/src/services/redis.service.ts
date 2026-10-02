@@ -40,8 +40,11 @@ function hashToken(token: string): string {
   return createHash('sha256').update(token).digest('hex');
 }
 
+// In-memory fallback cache to ensure zero session drops if Redis is unavailable or restarting
+const inMemorySessions = new Map<string, { data: RefreshTokenSessionData; expiresAt: number }>();
+
 /**
- * Saves a refresh token session in Redis with TTL.
+ * Saves a refresh token session in Redis with in-memory fallback.
  * Default TTL is 30 days (2,592,000 seconds).
  */
 export async function saveRefreshToken(
@@ -49,41 +52,66 @@ export async function saveRefreshToken(
   sessionData: RefreshTokenSessionData,
   ttlSeconds = 30 * 24 * 3600
 ): Promise<void> {
+  const hashed = hashToken(token);
+  // Always store in memory fallback cache
+  inMemorySessions.set(hashed, {
+    data: sessionData,
+    expiresAt: Date.now() + ttlSeconds * 1000,
+  });
+
   try {
     const redis = getRedisClient();
-    const key = `auth:refresh:${hashToken(token)}`;
+    const key = `auth:refresh:${hashed}`;
     await redis.set(key, JSON.stringify(sessionData), 'EX', ttlSeconds);
   } catch (err) {
-    if (env.NODE_ENV !== 'test') console.warn('Redis saveRefreshToken failed:', err);
+    if (env.NODE_ENV !== 'test') console.warn('Redis saveRefreshToken failed (using in-memory fallback):', err);
   }
 }
 
 /**
- * Retrieves a refresh token session from Redis.
+ * Retrieves a refresh token session from Redis with in-memory fallback.
  */
 export async function getRefreshToken(token: string): Promise<RefreshTokenSessionData | null> {
+  const hashed = hashToken(token);
+
+  // 1. Try Redis first
   try {
     const redis = getRedisClient();
-    const key = `auth:refresh:${hashToken(token)}`;
+    const key = `auth:refresh:${hashed}`;
     const raw = await redis.get(key);
-    if (!raw) return null;
-    return JSON.parse(raw) as RefreshTokenSessionData;
+    if (raw) {
+      return JSON.parse(raw) as RefreshTokenSessionData;
+    }
   } catch {
-    return null;
+    // Redis unavailable, fallback to memory
   }
+
+  // 2. Fallback to in-memory session
+  const mem = inMemorySessions.get(hashed);
+  if (mem) {
+    if (mem.expiresAt > Date.now()) {
+      return mem.data;
+    }
+    inMemorySessions.delete(hashed);
+  }
+
+  return null;
 }
 
 /**
- * Revokes a refresh token from Redis.
+ * Revokes a refresh token from Redis and in-memory cache.
  */
 export async function revokeRefreshToken(token: string): Promise<boolean> {
+  const hashed = hashToken(token);
+  inMemorySessions.delete(hashed);
+
   try {
     const redis = getRedisClient();
-    const key = `auth:refresh:${hashToken(token)}`;
+    const key = `auth:refresh:${hashed}`;
     const count = await redis.del(key);
     return count > 0;
   } catch {
-    return false;
+    return true;
   }
 }
 

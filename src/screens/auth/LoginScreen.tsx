@@ -96,28 +96,39 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onSwitchToRegister }) 
     }
   };
 
+  const DEMO_CREDENTIALS: Record<UserRole, { phone: string; pass: string }> = {
+    PLATFORM_ADMIN: { phone: '9876500000', pass: 'Password123!' },
+    OPERATOR_ADMIN: { phone: '9861465410', pass: 'Password123!' },
+    DRIVER: { phone: '9876543202', pass: 'Password123!' },
+    CONDUCTOR: { phone: '9876543203', pass: 'Password123!' },
+    PASSENGER: { phone: '7381319957', pass: 'Password123!' },
+  };
+
   const handleQuickLogin = async (role: UserRole) => {
     if (process.env.NODE_ENV === 'production') {
       return;
     }
+    const cred = DEMO_CREDENTIALS[role];
+    if (!cred) return;
+
+    setIdentifier(cred.phone);
+    setPassword(cred.pass);
+    clearError();
+
     try {
-      if (role === 'PLATFORM_ADMIN') {
-        setIdentifier('9876500000');
-        setPassword('Password123!');
-        try {
-          await login('9876500000', 'Password123!', true);
-          navigationStore.setActiveRole(role);
-          navigationStore.login(role);
-          return;
-        } catch {
-          // If network failed, fall through to demo role
-        }
+      await login(cred.phone, cred.pass, true);
+      const loggedUser = useAuthStore.getState().user;
+      if (loggedUser) {
+        navigationStore.setActiveRole(loggedUser.role, loggedUser);
+        navigationStore.login(loggedUser.role, loggedUser);
       }
-      loginAsDemoRole(role);
-      navigationStore.setActiveRole(role);
-      navigationStore.login(role);
     } catch {
-      // Ignore if demo login is unavailable
+      // Fallback only if backend is unreachable in offline dev
+      try {
+        loginAsDemoRole(role);
+        navigationStore.setActiveRole(role);
+        navigationStore.login(role);
+      } catch {}
     }
   };
 
