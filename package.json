@@ -13,7 +13,7 @@
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
     "build": "pnpm build:packages && pnpm api:build",
-    "build:web": "npx expo export --platform web",
+    "build:web": "expo export -p web",
     "api:start": "pnpm --filter @ruralbus/api start",
     "api:dev": "pnpm --filter @ruralbus/api dev",
     "api:build": "pnpm --filter @ruralbus/api build",
