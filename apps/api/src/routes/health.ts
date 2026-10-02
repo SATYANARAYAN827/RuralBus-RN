@@ -2,6 +2,16 @@ import { FastifyInstance, FastifyPluginAsync } from 'fastify';
 import { env } from '../config/env.js';
 
 export const healthRoutes: FastifyPluginAsync = async (app: FastifyInstance) => {
+  app.get('/', async (_request, reply) => {
+    return reply.status(200).send({
+      name: 'RuralBus API',
+      status: 'online',
+      version: '0.1.0',
+      message: '🚀 RuralBus Backend API is live and operational!',
+      timestamp: new Date().toISOString(),
+    });
+  });
+
   app.get('/health', async (_request, reply) => {
     return reply.status(200).send({
       status: 'ok',
