@@ -26,6 +26,7 @@
     "build:packages": "pnpm --filter @ruralbus/shared-config --filter @ruralbus/shared-types --filter @ruralbus/shared-validators --filter @ruralbus/database build"
   },
   "dependencies": {
+    "@babel/runtime": "^8.0.5",
     "@expo/metro-runtime": "~4.0.1",
     "@react-navigation/native": "^7.0.14",
     "expo": "~52.0.0",
