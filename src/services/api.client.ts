@@ -5,6 +5,36 @@ class ApiClient {
   private refreshToken: string | null = null;
   private refreshPromise: Promise<string | null> | null = null;
   private onSessionExpiredCallback: (() => void) | null = null;
+  private isPrewarmed: boolean = false;
+
+  constructor() {
+    this.prewarmBackend();
+    this.startHeartbeat();
+  }
+
+  /**
+   * Pings backend health endpoint immediately on app load to wake up Render container
+   */
+  public prewarmBackend() {
+    if (this.isPrewarmed) return;
+    this.isPrewarmed = true;
+    try {
+      fetch(`${API_CONFIG.BASE_URL}/health`, { mode: 'cors' }).catch(() => {});
+    } catch {}
+  }
+
+  /**
+   * Periodically pings /health every 8 minutes to keep free-tier Render container active while user is on the site
+   */
+  private startHeartbeat() {
+    try {
+      if (typeof window !== 'undefined' && typeof setInterval !== 'undefined') {
+        setInterval(() => {
+          fetch(`${API_CONFIG.BASE_URL}/health`, { mode: 'cors' }).catch(() => {});
+        }, 8 * 60 * 1000);
+      }
+    } catch {}
+  }
 
   setOnSessionExpired(callback: (() => void) | null) {
     this.onSessionExpiredCallback = callback;
@@ -169,8 +199,16 @@ class ApiClient {
 
       return json;
     } catch (err: any) {
+      // If the backend was asleep or connection dropped on first attempt, retry once
+      if (!options._isRetry) {
+        return this.request<T>(endpoint, {
+          ...options,
+          _isRetry: true,
+        });
+      }
+
       if (err.name === 'AbortError') {
-        throw new Error('Server connection timed out. If the backend is waking up, please retry in a few seconds.');
+        throw new Error('Server connection timed out. The backend on Render is taking longer than expected to respond.');
       }
       if (err.message === 'Failed to fetch' || err.message?.includes('NetworkError') || err.message?.includes('network')) {
         throw new Error(

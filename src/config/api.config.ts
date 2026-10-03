@@ -46,8 +46,8 @@ export const API_CONFIG = {
    */
   WS_URL: getEnvVar('EXPO_PUBLIC_WS_URL') || getEnvVar('REACT_APP_WS_URL') || derivedWsUrl,
 
-  /** Request timeout in milliseconds */
-  TIMEOUT_MS: 15000,
+  /** Request timeout in milliseconds (60s to gracefully accommodate Render cold-starts) */
+  TIMEOUT_MS: 60000,
 
   /** API Endpoints Catalog (Authoritative Backend in RURAL BUS/apps/api) */
   ENDPOINTS: {
