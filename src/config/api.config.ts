@@ -17,8 +17,20 @@ const getEnvVar = (key: string): string | undefined => {
   }
 };
 
-const rawBaseUrl = getEnvVar('EXPO_PUBLIC_API_URL') || getEnvVar('REACT_APP_API_URL') || 'http://localhost:4000';
+/**
+ * Production Render backend URL — used when EXPO_PUBLIC_API_URL env var is not set.
+ * On Vercel, if the env var is not configured in the Vercel dashboard, this ensures
+ * the app still works correctly in production.
+ */
+const PRODUCTION_API_URL = 'https://ruralbus-rn.onrender.com';
+
+const rawBaseUrl =
+  getEnvVar('EXPO_PUBLIC_API_URL') ||
+  getEnvVar('REACT_APP_API_URL') ||
+  PRODUCTION_API_URL;
+
 const derivedWsUrl = rawBaseUrl.replace(/^http/, 'ws').replace(/\/$/, '') + '/ws/tracking';
+
 
 export const API_CONFIG = {
   /**

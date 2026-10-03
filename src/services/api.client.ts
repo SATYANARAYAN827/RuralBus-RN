@@ -168,6 +168,16 @@ class ApiClient {
       }
 
       return json;
+    } catch (err: any) {
+      if (err.name === 'AbortError') {
+        throw new Error('Server connection timed out. If the backend is waking up, please retry in a few seconds.');
+      }
+      if (err.message === 'Failed to fetch' || err.message?.includes('NetworkError') || err.message?.includes('network')) {
+        throw new Error(
+          'Unable to reach server. Please check your internet connection or try again in a moment.'
+        );
+      }
+      throw err;
     } finally {
       clearTimeout(timeoutId);
     }
