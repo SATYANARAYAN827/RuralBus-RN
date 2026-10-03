@@ -336,15 +336,45 @@ export async function login(
     throw new UnauthorizedError('Invalid email/phone or password');
   }
 
-  // 3. Update last login timestamp
-  const now = new Date();
-  await db
-    .update(schema.users)
-    .set({ lastLoginAt: now, updatedAt: now })
-    .where(eq(schema.users.id, user.id));
+  // 3. Resolve role and tenantId in one fast direct lookup
+  let role = user.role;
+  let tenantId: string | null = null;
 
-  // 4. Resolve role and tenantId from operator memberships
-  const { role, tenantId } = await resolveUserRoleAndTenant(user.id, user.role);
+  if (user.role === 'PASSENGER' || user.role === 'PLATFORM_ADMIN') {
+    role = user.role;
+    tenantId = null;
+  } else {
+    const [member] = await db
+      .select({
+        role: schema.operatorMembers.role,
+        tenantId: schema.operatorMembers.tenantId,
+      })
+      .from(schema.operatorMembers)
+      .where(
+        and(
+          eq(schema.operatorMembers.userId, user.id),
+          eq(schema.operatorMembers.isActive, true)
+        )
+      )
+      .limit(1);
+
+    if (member) {
+      role = (member.role as AppUserRole) || user.role;
+      tenantId = member.tenantId;
+    } else {
+      const resolved = await resolveUserRoleAndTenant(user.id, user.role);
+      role = resolved.role;
+      tenantId = resolved.tenantId;
+    }
+  }
+
+  const now = new Date();
+
+  // Non-blocking update of lastLoginAt
+  db.update(schema.users)
+    .set({ lastLoginAt: now, updatedAt: now })
+    .where(eq(schema.users.id, user.id))
+    .catch(() => {});
 
   const authUser: AuthUser = {
     id: user.id,
@@ -361,7 +391,7 @@ export async function login(
     updatedAt: user.updatedAt.toISOString(),
   };
 
-  // 5. Issue JWT & Refresh Token
+  // 4. Issue JWT & Refresh Token
   const accessToken = jwtSigner({
     sub: authUser.id,
     role: authUser.role,
@@ -388,7 +418,7 @@ export async function login(
     tokens: {
       accessToken,
       refreshToken,
-      expiresIn: 900,
+      expiresIn: 900, // 15 minutes in seconds
     },
   };
 }
