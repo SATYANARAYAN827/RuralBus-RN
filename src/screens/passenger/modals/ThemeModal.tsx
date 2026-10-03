@@ -12,44 +12,84 @@ export const ThemeModal: React.FC<ThemeModalProps> = ({
   isOpen,
   onClose,
 }) => {
-  const { colors, isLight, setTheme } = useTheme();
+  const { colors, isLight, isAgro, theme, setTheme } = useTheme();
 
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Themes"
-      subtitle="Customize visual appearance"
+      title="Visual Themes"
+      subtitle="Customize your passenger portal look and feel"
       icon="🎨"
-      maxWidth={460}
+      maxWidth={480}
     >
       <View style={styles.container}>
+        {/* Agro Lime Edition (Recommended) */}
+        <TouchableOpacity
+          onPress={() => setTheme('agro')}
+          style={[
+            styles.themeCard,
+            {
+              backgroundColor: isAgro
+                ? 'rgba(163, 230, 53, 0.14)'
+                : isLight
+                ? '#ffffff'
+                : '#0e1c0e',
+              borderColor: isAgro
+                ? '#A3E635'
+                : isLight
+                ? '#e2e8f0'
+                : 'rgba(163, 230, 53, 0.25)',
+            },
+          ]}
+        >
+          <View style={styles.cardContent}>
+            <Text style={{ fontSize: 24, marginRight: 12 }}>🌿</Text>
+            <View style={{ flex: 1 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Text style={[styles.themeTitle, { color: isAgro ? '#A3E635' : colors.textPrimary }]}>
+                  Agro Field Lime
+                </Text>
+                <View style={styles.recomBadge}>
+                  <Text style={styles.recomBadgeText}>RECOMMENDED</Text>
+                </View>
+              </View>
+              <Text style={[styles.themeDesc, { color: colors.textSecondary }]}>
+                Deep organic forest green with high-contrast electric lime accents
+              </Text>
+            </View>
+            {isAgro && <Text style={[styles.checkmark, { color: '#A3E635' }]}>✓</Text>}
+          </View>
+        </TouchableOpacity>
+
         {/* Dark Mode */}
         <TouchableOpacity
           onPress={() => setTheme('dark')}
           style={[
             styles.themeCard,
             {
-              backgroundColor: !isLight
+              backgroundColor: theme === 'dark'
                 ? 'rgba(0, 212, 136, 0.12)'
-                : '#ffffff',
-              borderColor: !isLight
+                : isLight
+                ? '#ffffff'
+                : '#1e293b',
+              borderColor: theme === 'dark'
                 ? '#00D488'
-                : '#e2e8f0',
+                : '#334155',
             },
           ]}
         >
           <View style={styles.cardContent}>
             <Text style={{ fontSize: 22, marginRight: 12 }}>🌙</Text>
             <View style={{ flex: 1 }}>
-              <Text style={[styles.themeTitle, { color: !isLight ? '#00D488' : colors.textPrimary }]}>
-                Dark Mode
+              <Text style={[styles.themeTitle, { color: theme === 'dark' ? '#00D488' : colors.textPrimary }]}>
+                Soft Slate Dark
               </Text>
               <Text style={[styles.themeDesc, { color: colors.textSecondary }]}>
-                Soft Slate comfortable dark appearance
+                Comfortable low-glare slate midnight appearance
               </Text>
             </View>
-            {!isLight && <Text style={styles.checkmark}>✓</Text>}
+            {theme === 'dark' && <Text style={styles.checkmark}>✓</Text>}
           </View>
         </TouchableOpacity>
 
@@ -63,7 +103,7 @@ export const ThemeModal: React.FC<ThemeModalProps> = ({
                 ? '#ecfdf5'
                 : '#1e293b',
               borderColor: isLight
-                ? '#00D488'
+                ? '#047857'
                 : '#334155',
             },
           ]}
@@ -72,13 +112,13 @@ export const ThemeModal: React.FC<ThemeModalProps> = ({
             <Text style={{ fontSize: 22, marginRight: 12 }}>☀️</Text>
             <View style={{ flex: 1 }}>
               <Text style={[styles.themeTitle, { color: isLight ? '#047857' : colors.textPrimary }]}>
-                Light Mode
+                Ice White Light
               </Text>
               <Text style={[styles.themeDesc, { color: colors.textSecondary }]}>
-                Ice White clean daytime appearance
+                Clean daytime high-contrast appearance
               </Text>
             </View>
-            {isLight && <Text style={styles.checkmark}>✓</Text>}
+            {isLight && <Text style={[styles.checkmark, { color: '#047857' }]}>✓</Text>}
           </View>
         </TouchableOpacity>
 
@@ -148,5 +188,19 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 11,
     lineHeight: 16,
+  },
+  recomBadge: {
+    backgroundColor: 'rgba(163, 230, 53, 0.20)',
+    borderColor: '#A3E635',
+    borderWidth: 1,
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: 9999,
+  },
+  recomBadgeText: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: '#A3E635',
+    letterSpacing: 0.5,
   },
 });

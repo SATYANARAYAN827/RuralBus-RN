@@ -76,12 +76,12 @@ export const ResponsiveShell: React.FC<ResponsiveShellProps> = ({
     <SafeAreaView
       style={[
         styles.safeArea,
-        { backgroundColor: isLight ? '#f8fafc' : '#0f172a' },
+        { backgroundColor: colors.background },
       ]}
     >
       <StatusBar
         barStyle={isLight ? 'dark-content' : 'light-content'}
-        backgroundColor={isLight ? '#f8fafc' : '#0f172a'}
+        backgroundColor={colors.background}
       />
 
       <View style={styles.shellLayout}>

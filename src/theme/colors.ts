@@ -1,4 +1,4 @@
-﻿/**
+/**
  * RuralBus Design System - Color Tokens
  * Exact golden match to the approved Capacitor UI and RURAL BUS/packages/ui/src/tokens.ts
  */
@@ -135,6 +135,68 @@ export const darkColors = {
   badgeMintBg: 'rgba(0, 212, 136, 0.15)',
   badgeMintText: '#00D488',
   badgeMintBorder: 'rgba(0, 212, 136, 0.3)',
+} as const;
+
+export const agroColors = {
+  // Page & Backgrounds (Dark Agricultural Deep Midnight / Nature Green)
+  background: '#071007',
+  surface: '#0f200f',
+  surfaceAlt: '#142814',
+  card: '#0e1c0e',
+  cardElevated: '#162b16',
+  backdrop: 'rgba(5, 12, 5, 0.88)',
+
+  // Borders
+  border: 'rgba(163, 230, 53, 0.22)',
+  borderSubtle: 'rgba(255, 255, 255, 0.08)',
+  borderStrong: 'rgba(163, 230, 53, 0.45)',
+  borderFocus: '#A3E635',
+
+  // Typography
+  textPrimary: '#ffffff',
+  textSecondary: '#d1e7d1',
+  textMuted: '#8ba58b',
+  textTertiary: '#5d775d',
+  textInverse: '#071007',
+  textBrand: '#A3E635',
+
+  // Inputs
+  inputBackground: '#0b160b',
+  inputBorder: 'rgba(163, 230, 53, 0.30)',
+  inputPlaceholder: '#6e8a6e',
+  inputText: '#ffffff',
+
+  // Header & Navigation
+  headerBackground: 'rgba(7, 16, 7, 0.95)',
+  headerBorder: 'rgba(163, 230, 53, 0.15)',
+  sidebarBackground: '#050c05',
+  sidebarBorder: 'rgba(163, 230, 53, 0.18)',
+
+  // Navigation Items
+  navItemActiveBg: 'rgba(163, 230, 53, 0.15)',
+  navItemActiveBorder: '#A3E635',
+  navItemActiveText: '#A3E635',
+  navItemInactiveText: '#8ba58b',
+  navItemInactiveBg: 'transparent',
+
+  // Bottom Nav
+  bottomNavBg: '#081208',
+  bottomNavBorder: 'rgba(163, 230, 53, 0.20)',
+
+  // Modals
+  modalBackground: '#0a150a',
+  modalBorder: 'rgba(163, 230, 53, 0.30)',
+
+  // Mint / Lime Badges
+  badgeMintBg: 'rgba(163, 230, 53, 0.14)',
+  badgeMintText: '#A3E635',
+  badgeMintBorder: 'rgba(163, 230, 53, 0.35)',
+
+  // Direct Agro Highlights
+  lime: '#A3E635',
+  limeLight: '#bef264',
+  limeDark: '#65a30d',
+  limeGlow: 'rgba(163, 230, 53, 0.25)',
 } as const;
 
 export const statusColors = {

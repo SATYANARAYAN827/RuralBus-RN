@@ -10,7 +10,7 @@ export type UserRole =
   | 'PLATFORM_ADMIN';
 
 export type LanguageCode = 'EN' | 'OD' | 'HI';
-export type ThemeMode = 'light' | 'dark';
+export type ThemeMode = 'light' | 'dark' | 'agro';
 
 export interface UserProfile {
   id: string;

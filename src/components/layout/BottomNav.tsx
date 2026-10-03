@@ -24,15 +24,15 @@ export const BottomNav: React.FC<BottomNavProps> = ({
   roleBadgeColor = '#00D488',
   style,
 }) => {
-  const { isLight, colors } = useTheme();
+  const { isLight, isAgro, colors } = useTheme();
 
   return (
     <View
       style={[
         styles.navBar,
         {
-          backgroundColor: isLight ? '#ffffff' : '#0f172a',
-          borderTopColor: isLight ? '#e2e8f0' : '#1e293b',
+          backgroundColor: colors.bottomNavBg,
+          borderTopColor: colors.bottomNavBorder,
         },
         style,
       ]}

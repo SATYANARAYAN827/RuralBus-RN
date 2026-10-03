@@ -1,4 +1,4 @@
-﻿import { create } from 'zustand';
+import { create } from 'zustand';
 import { ThemeMode } from '../types';
 
 interface ThemeState {
@@ -12,11 +12,11 @@ const STORAGE_KEY = 'ruralbus_theme';
 const getInitialTheme = (): ThemeMode => {
   if (typeof window !== 'undefined' && window.localStorage) {
     const saved = localStorage.getItem(STORAGE_KEY) as ThemeMode | null;
-    if (saved === 'dark' || saved === 'light') {
+    if (saved === 'dark' || saved === 'light' || saved === 'agro') {
       return saved;
     }
   }
-  return 'light'; // Default to Ice White as approved
+  return 'agro'; // Default to the premier Agro-Green Electric Lime theme for rich passenger experience
 };
 
 export const useThemeStore = create<ThemeState>((set, get) => {

@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import {
   TouchableOpacity,
   Text,
@@ -39,7 +39,7 @@ export const Button: React.FC<ButtonProps> = ({
   style,
   textStyle,
 }) => {
-  const { colors, brandColors, isLight, borderRadius, spacing, shadows } = useTheme();
+  const { colors, brandColors, isLight, isAgro, borderRadius, spacing, shadows } = useTheme();
 
   const isDisabled = disabled || isLoading;
 
@@ -58,21 +58,21 @@ export const Button: React.FC<ButtonProps> = ({
       case 'primary':
         return {
           container: {
-            backgroundColor: '#059669', // Emerald-600
+            backgroundColor: isAgro ? '#A3E635' : '#059669', // Electric Lime in Agro mode
             borderColor: 'transparent',
             borderWidth: 0,
             ...(isLight ? shadows.card : shadows.glow),
           },
           text: {
-            color: '#ffffff',
-            fontWeight: '800',
+            color: isAgro ? '#071007' : '#ffffff',
+            fontWeight: isAgro ? '900' : '800',
           },
         };
       case 'secondary':
         return {
           container: {
-            backgroundColor: isLight ? '#334155' : '#1e293b',
-            borderColor: isLight ? '#475569' : '#334155',
+            backgroundColor: isAgro ? '#142814' : isLight ? '#334155' : '#1e293b',
+            borderColor: isAgro ? 'rgba(163, 230, 53, 0.3)' : isLight ? '#475569' : '#334155',
             borderWidth: 1,
           },
           text: {
@@ -84,7 +84,7 @@ export const Button: React.FC<ButtonProps> = ({
         return {
           container: {
             backgroundColor: isLight ? '#ffffff' : 'transparent',
-            borderColor: isLight ? '#cbd5e1' : 'rgba(255, 255, 255, 0.20)',
+            borderColor: isAgro ? 'rgba(163, 230, 53, 0.35)' : isLight ? '#cbd5e1' : 'rgba(255, 255, 255, 0.20)',
             borderWidth: 1.5,
           },
           text: {
@@ -107,12 +107,12 @@ export const Button: React.FC<ButtonProps> = ({
       case 'mint':
         return {
           container: {
-            backgroundColor: isLight ? '#ecfdf5' : 'rgba(0, 212, 136, 0.12)',
-            borderColor: isLight ? '#a7f3d0' : 'rgba(0, 212, 136, 0.35)',
+            backgroundColor: isAgro ? 'rgba(163, 230, 53, 0.14)' : isLight ? '#ecfdf5' : 'rgba(0, 212, 136, 0.12)',
+            borderColor: isAgro ? 'rgba(163, 230, 53, 0.35)' : isLight ? '#a7f3d0' : 'rgba(0, 212, 136, 0.35)',
             borderWidth: 1.5,
           },
           text: {
-            color: isLight ? '#047857' : '#00D488',
+            color: isAgro ? '#A3E635' : isLight ? '#047857' : '#00D488',
             fontWeight: '800',
           },
         };

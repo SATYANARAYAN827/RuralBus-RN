@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { View, Text, StyleSheet, ViewStyle, TextStyle } from 'react-native';
 import { useTheme } from '../../theme';
 
@@ -21,16 +21,16 @@ export const Badge: React.FC<BadgeProps> = ({
   style,
   textStyle,
 }) => {
-  const { isLight, borderRadius, spacing } = useTheme();
+  const { isLight, isAgro, borderRadius, spacing } = useTheme();
 
   const getVariantStyles = (): { bg: string; text: string; border: string } => {
     switch (variant) {
       case 'success':
       case 'mint':
         return {
-          bg: isLight ? '#ecfdf5' : 'rgba(0, 212, 136, 0.15)',
-          text: isLight ? '#047857' : '#00D488',
-          border: isLight ? '#a7f3d0' : 'rgba(0, 212, 136, 0.35)',
+          bg: isAgro ? 'rgba(163, 230, 53, 0.14)' : isLight ? '#ecfdf5' : 'rgba(0, 212, 136, 0.15)',
+          text: isAgro ? '#A3E635' : isLight ? '#047857' : '#00D488',
+          border: isAgro ? 'rgba(163, 230, 53, 0.35)' : isLight ? '#a7f3d0' : 'rgba(0, 212, 136, 0.35)',
         };
       case 'purple':
         return {

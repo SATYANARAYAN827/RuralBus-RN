@@ -47,6 +47,31 @@ export const PassengerHomeScreen: React.FC<PassengerHomeScreenProps> = ({
     onNavigateToFindBus();
   };
 
+  const { isLight, isAgro, colors } = useTheme();
+  const { isDesktop, isMobile } = useResponsive();
+  const {
+    origin,
+    destination,
+    journeyDate,
+    setOrigin,
+    setDestination,
+    setJourneyDate,
+    swapOriginDestination,
+    searchBuses,
+    tickets,
+    setAllStopsOpen,
+    setBuyTicketModalOpen,
+    selectTrip,
+  } = usePassengerStore();
+
+  const [isLocationBannerDismissed, setIsLocationBannerDismissed] = useState(false);
+  const [gpsActive, setGpsActive] = useState(true);
+
+  const handleSearchPress = async () => {
+    await searchBuses();
+    onNavigateToFindBus();
+  };
+
   const handleCorridorPress = async (orig: string, dest: string) => {
     setOrigin(orig);
     setDestination(dest);
@@ -55,16 +80,16 @@ export const PassengerHomeScreen: React.FC<PassengerHomeScreenProps> = ({
   };
 
   // Color theme helpers
-  const textDark = isLight ? '#0f172a' : '#f8fafc';
-  const textMuted = isLight ? '#64748b' : '#94a3b8';
-  const cardBg = isLight ? '#ffffff' : '#1e293b';
-  const cardBorder = isLight ? '#e2e8f0' : '#334155';
-  const inputBg = isLight ? '#ffffff' : '#0f172a';
-  const inputBorder = isLight ? '#cbd5e1' : '#334155';
+  const textDark = isAgro ? '#ffffff' : isLight ? '#0f172a' : '#f8fafc';
+  const textMuted = isAgro ? '#8ba58b' : isLight ? '#64748b' : '#94a3b8';
+  const cardBg = isAgro ? '#0e1c0e' : isLight ? '#ffffff' : '#1e293b';
+  const cardBorder = isAgro ? 'rgba(163, 230, 53, 0.25)' : isLight ? '#e2e8f0' : '#334155';
+  const inputBg = isAgro ? '#ffffff' : isLight ? '#ffffff' : '#0f172a';
+  const inputBorder = isAgro ? 'rgba(163, 230, 53, 0.35)' : isLight ? '#cbd5e1' : '#334155';
 
   return (
     <ScrollView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: isAgro ? '#071007' : isLight ? '#f8fafc' : '#0f172a' }]}
       contentContainerStyle={[
         styles.scrollContent,
         { padding: isMobile ? 14 : 24 },
@@ -94,8 +119,8 @@ export const PassengerHomeScreen: React.FC<PassengerHomeScreenProps> = ({
             style={[
               styles.locationPill,
               {
-                backgroundColor: isLight ? '#ffffff' : '#1e293b',
-                borderColor: isLight ? '#cbd5e1' : '#334155',
+                backgroundColor: isAgro ? '#0e1c0e' : isLight ? '#ffffff' : '#1e293b',
+                borderColor: isAgro ? 'rgba(163, 230, 53, 0.35)' : isLight ? '#cbd5e1' : '#334155',
                 alignSelf: isMobile ? 'flex-start' : 'auto',
                 marginTop: isMobile ? 10 : 0,
               },
@@ -116,8 +141,8 @@ export const PassengerHomeScreen: React.FC<PassengerHomeScreenProps> = ({
               styles.gpsBanner,
               isMobile ? styles.gpsBannerMobile : styles.gpsBannerDesktop,
               {
-                backgroundColor: isLight ? '#ecfdf5' : 'rgba(0, 212, 136, 0.08)',
-                borderColor: isLight ? '#a7f3d0' : 'rgba(0, 212, 136, 0.25)',
+                backgroundColor: isAgro ? 'rgba(163, 230, 53, 0.08)' : isLight ? '#ecfdf5' : 'rgba(0, 212, 136, 0.08)',
+                borderColor: isAgro ? 'rgba(163, 230, 53, 0.25)' : isLight ? '#a7f3d0' : 'rgba(0, 212, 136, 0.25)',
               },
             ]}
           >
@@ -125,7 +150,7 @@ export const PassengerHomeScreen: React.FC<PassengerHomeScreenProps> = ({
               <View
                 style={[
                   styles.gpsIconBox,
-                  { backgroundColor: isLight ? '#d1fae5' : 'rgba(0, 212, 136, 0.15)' },
+                  { backgroundColor: isAgro ? 'rgba(163, 230, 53, 0.18)' : isLight ? '#d1fae5' : 'rgba(0, 212, 136, 0.15)' },
                 ]}
               >
                 <Text style={{ fontSize: 18 }}>📍</Text>
@@ -162,10 +187,10 @@ export const PassengerHomeScreen: React.FC<PassengerHomeScreenProps> = ({
                 activeOpacity={0.85}
                 style={[
                   styles.turnOnGpsBtn,
-                  { backgroundColor: '#00875A' },
+                  { backgroundColor: isAgro ? '#A3E635' : '#00875A' },
                 ]}
               >
-                <Text style={styles.turnOnGpsBtnText}>
+                <Text style={[styles.turnOnGpsBtnText, isAgro && { color: '#071007', fontWeight: '900' }]}>
                   {gpsActive ? '✓ GPS Active' : 'Turn on GPS ➔'}
                 </Text>
               </TouchableOpacity>
@@ -185,7 +210,12 @@ export const PassengerHomeScreen: React.FC<PassengerHomeScreenProps> = ({
           ]}
         >
           <View style={styles.heroCardHeader}>
-            <View style={styles.searchIconBox}>
+            <View
+              style={[
+                styles.searchIconBox,
+                { backgroundColor: isAgro ? 'rgba(163, 230, 53, 0.15)' : '#e0f2fe' },
+              ]}
+            >
               <Text style={{ fontSize: 20 }}>🔍</Text>
             </View>
             <View>
@@ -219,7 +249,7 @@ export const PassengerHomeScreen: React.FC<PassengerHomeScreenProps> = ({
                 <Text
                   style={[
                     styles.fakeInputText,
-                    { color: origin ? textDark : (isLight ? '#94a3b8' : '#64748b') },
+                    { color: origin ? (isAgro ? '#071007' : textDark) : (isLight ? '#94a3b8' : '#64748b') },
                   ]}
                   numberOfLines={1}
                 >
@@ -237,12 +267,12 @@ export const PassengerHomeScreen: React.FC<PassengerHomeScreenProps> = ({
                 styles.swapButton,
                 isMobile && { alignSelf: 'center', marginVertical: 4 },
                 {
-                  backgroundColor: isLight ? '#f1f5f9' : '#1e293b',
-                  borderColor: inputBorder,
+                  backgroundColor: isAgro ? '#071007' : isLight ? '#f1f5f9' : '#1e293b',
+                  borderColor: isAgro ? 'rgba(163, 230, 53, 0.4)' : inputBorder,
                 },
               ]}
             >
-              <Text style={[styles.swapButtonText, { color: '#00D488' }]}>⇄</Text>
+              <Text style={[styles.swapButtonText, { color: isAgro ? '#A3E635' : '#00D488' }]}>⇄</Text>
             </TouchableOpacity>
 
             {/* TO (DESTINATION) */}
@@ -264,7 +294,7 @@ export const PassengerHomeScreen: React.FC<PassengerHomeScreenProps> = ({
                 <Text
                   style={[
                     styles.fakeInputText,
-                    { color: destination ? textDark : (isLight ? '#94a3b8' : '#64748b') },
+                    { color: destination ? (isAgro ? '#071007' : textDark) : (isLight ? '#94a3b8' : '#64748b') },
                   ]}
                   numberOfLines={1}
                 >
@@ -294,12 +324,12 @@ export const PassengerHomeScreen: React.FC<PassengerHomeScreenProps> = ({
               >
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                   <Text style={{ fontSize: 13 }}>📅</Text>
-                  <Text style={[styles.dateText, { color: textDark }]}>
+                  <Text style={[styles.dateText, { color: isAgro ? '#071007' : textDark }]}>
                     {journeyDate}
                   </Text>
                 </View>
                 <View style={isMobile ? { flexDirection: 'row', alignItems: 'center' } : styles.selectDateCol}>
-                  <Text style={[styles.selectDateText, isMobile && { fontSize: 10.5 }]}>
+                  <Text style={[styles.selectDateText, isMobile && { fontSize: 10.5 }, isAgro && { color: '#071007' }]}>
                     SELECT DATE
                   </Text>
                 </View>
@@ -311,10 +341,16 @@ export const PassengerHomeScreen: React.FC<PassengerHomeScreenProps> = ({
               <TouchableOpacity
                 onPress={handleSearchPress}
                 activeOpacity={0.85}
-                style={[styles.searchButton, isMobile && { width: '100%' }]}
+                style={[
+                  styles.searchButton,
+                  isAgro && { backgroundColor: '#A3E635' },
+                  isMobile && { width: '100%' },
+                ]}
               >
                 <Text style={{ fontSize: 14 }}>🔍</Text>
-                <Text style={styles.searchButtonText}>Search Buses</Text>
+                <Text style={[styles.searchButtonText, isAgro && { color: '#071007', fontWeight: '900' }]}>
+                  Search Buses
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -333,12 +369,12 @@ export const PassengerHomeScreen: React.FC<PassengerHomeScreenProps> = ({
                   style={[
                     styles.corridorChip,
                     {
-                      backgroundColor: isLight ? '#f8fafc' : '#1e293b',
-                      borderColor: cardBorder,
+                      backgroundColor: isAgro ? 'rgba(163, 230, 53, 0.08)' : isLight ? '#f8fafc' : '#1e293b',
+                      borderColor: isAgro ? 'rgba(163, 230, 53, 0.25)' : cardBorder,
                     },
                   ]}
                 >
-                  <Text style={[styles.chipText, { color: isLight ? '#334155' : '#cbd5e1' }]}>
+                  <Text style={[styles.chipText, { color: isAgro ? '#d1e7d1' : isLight ? '#334155' : '#cbd5e1' }]}>
                     {c.name}
                   </Text>
                 </TouchableOpacity>
@@ -637,15 +673,55 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     alignItems: 'flex-start',
   },
-  welcomeTitle: {
-    fontSize: 22,
+  agroCapsuleBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 9999,
+    borderWidth: 1,
+    marginBottom: 6,
+  },
+  agroCapsuleText: {
+    fontSize: 11,
     fontWeight: '800',
-    letterSpacing: -0.4,
+    letterSpacing: 0.6,
+  },
+  welcomeTitle: {
+    fontSize: 26,
+    fontWeight: '900',
+    letterSpacing: -0.5,
+    lineHeight: 30,
+  },
+  welcomeTitleHighlight: {
+    fontSize: 26,
+    fontWeight: '900',
+    letterSpacing: -0.5,
+    lineHeight: 30,
+    marginBottom: 4,
   },
   welcomeSubtitle: {
-    fontSize: 12.5,
-    marginTop: 2,
+    fontSize: 13,
+    marginTop: 4,
     fontWeight: '500',
+    lineHeight: 18,
+  },
+  searchButtonAgro: {
+    backgroundColor: '#A3E635',
+    borderRadius: 9999,
+    paddingHorizontal: 22,
+    paddingVertical: 12,
+    borderWidth: 0,
+    shadowColor: '#A3E635',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 4,
+  },
+  searchButtonTextAgro: {
+    color: '#071007',
+    fontSize: 13.5,
+    fontWeight: '900',
+    letterSpacing: 0.5,
   },
   locationPill: {
     flexDirection: 'row',

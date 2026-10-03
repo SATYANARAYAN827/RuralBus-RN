@@ -54,8 +54,8 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
       style={[
         styles.header,
         {
-          backgroundColor: isLight ? 'rgba(248, 250, 252, 0.95)' : 'rgba(15, 23, 42, 0.95)',
-          borderBottomColor: isLight ? 'rgba(203, 213, 225, 0.8)' : 'rgba(255, 255, 255, 0.08)',
+          backgroundColor: colors.headerBackground,
+          borderBottomColor: colors.headerBorder,
           borderBottomWidth: 1,
           paddingHorizontal: isMobile ? 12 : 24,
           ...(isLight ? shadows.subtle : shadows.card),
