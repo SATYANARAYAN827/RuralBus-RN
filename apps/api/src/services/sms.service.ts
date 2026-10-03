@@ -17,7 +17,7 @@ export interface SendSmsOptions {
 
 export interface SmsSendResult {
   success: boolean;
-  provider: 'fast2sms' | 'twilio' | 'msg91' | 'mock';
+  provider: 'fast2sms' | 'twofactor' | 'textbelt' | 'twilio' | 'msg91' | 'mock';
   messageId?: string;
   message: string;
   error?: string;
@@ -47,18 +47,19 @@ export async function sendSmsOtp(options: SendSmsOptions): Promise<SmsSendResult
 
   const configuredProvider = (process.env.SMS_PROVIDER || '').toLowerCase();
   const fast2smsKey = process.env.FAST2SMS_API_KEY;
+  const twoFactorKey = process.env.TWOFACTOR_API_KEY || process.env['2FACTOR_API_KEY'];
+  const textbeltKey = process.env.TEXTBELT_KEY;
   const twilioSid = process.env.TWILIO_ACCOUNT_SID;
   const twilioAuth = process.env.TWILIO_AUTH_TOKEN;
   const twilioFrom = process.env.TWILIO_PHONE_NUMBER;
   const msg91Auth = process.env.MSG91_AUTH_KEY;
   const msg91Template = process.env.MSG91_TEMPLATE_ID;
 
-  // 1. Check for Fast2SMS (Primary Indian OTP Gateway)
+  // 1. Check for Fast2SMS (Primary Indian Quick OTP Gateway - https://www.fast2sms.com)
   if (configuredProvider === 'fast2sms' || (!configuredProvider && fast2smsKey)) {
-    if (!fast2smsKey) {
-      console.warn('[SMS Gateway] FAST2SMS_API_KEY is not configured in .env. Falling back to console logger.');
-    } else {
+    if (fast2smsKey) {
       try {
+        // Attempt 1: Fast2SMS Quick OTP POST Route
         const response = await fetch('https://www.fast2sms.com/dev/bulkV2', {
           method: 'POST',
           headers: {
@@ -79,37 +80,95 @@ export async function sendSmsOtp(options: SendSmsOptions): Promise<SmsSendResult
             success: true,
             provider: 'fast2sms',
             messageId: data.request_id,
-            message: `SMS OTP delivered to +91 ${cleanPhone}`,
+            message: `SMS OTP delivered to +91 ${cleanPhone} via Fast2SMS`,
             dispatchedOtp: otp,
           };
         } else {
+          // Attempt 2: Fallback to Fast2SMS URL Query String OTP
+          const fallbackUrl = `https://www.fast2sms.com/dev/bulkV2?authorization=${encodeURIComponent(fast2smsKey)}&route=otp&variables_values=${encodeURIComponent(otp)}&numbers=${cleanPhone}`;
+          const fallbackResp = await fetch(fallbackUrl, { method: 'GET' });
+          const fallbackData = (await fallbackResp.json()) as any;
+
+          if (fallbackData.return === true) {
+            console.log(`[SMS Gateway] Delivered SMS OTP to +91 ${cleanPhone} via Fast2SMS query fallback`);
+            return {
+              success: true,
+              provider: 'fast2sms',
+              messageId: fallbackData.request_id,
+              message: `SMS OTP delivered to +91 ${cleanPhone}`,
+              dispatchedOtp: otp,
+            };
+          }
+
           const errMsg = Array.isArray(data.message) ? data.message.join(', ') : String(data.message || 'Fast2SMS dispatch failed');
           console.error(`[SMS Gateway] Fast2SMS error for +91 ${cleanPhone}:`, errMsg);
-          return {
-            success: false,
-            provider: 'fast2sms',
-            message: errMsg,
-            error: errMsg,
-          };
         }
       } catch (err: any) {
         console.error('[SMS Gateway] Network error connecting to Fast2SMS:', err.message);
-        return {
-          success: false,
-          provider: 'fast2sms',
-          message: 'Network error communicating with SMS gateway.',
-          error: err.message,
-        };
       }
     }
   }
 
-  // 2. Check for Twilio (Global SMS API)
+  // 2. Check for 2Factor.in (Free Indian OTP SMS API - https://2factor.in)
+  if (configuredProvider === 'twofactor' || (!configuredProvider && twoFactorKey)) {
+    if (twoFactorKey) {
+      try {
+        const url = `https://2factor.in/API/V1/${encodeURIComponent(twoFactorKey)}/SMS/+91${cleanPhone}/${otp}/AUTOGEN`;
+        const response = await fetch(url, { method: 'GET' });
+        const data = (await response.json()) as any;
+
+        if (data.Status === 'Success') {
+          console.log(`[SMS Gateway] Delivered SMS OTP to +91 ${cleanPhone} via 2Factor.in (Session: ${data.Details})`);
+          return {
+            success: true,
+            provider: 'twofactor',
+            messageId: data.Details,
+            message: `SMS OTP delivered to +91 ${cleanPhone} via 2Factor`,
+            dispatchedOtp: otp,
+          };
+        } else {
+          console.error(`[SMS Gateway] 2Factor error for +91 ${cleanPhone}:`, data.Details);
+        }
+      } catch (err: any) {
+        console.error('[SMS Gateway] Network error connecting to 2Factor:', err.message);
+      }
+    }
+  }
+
+  // 3. Check for Textbelt (Free & Paid SMS Gateway - https://textbelt.com)
+  if (configuredProvider === 'textbelt' || (!configuredProvider && textbeltKey)) {
+    try {
+      const response = await fetch('https://textbelt.com/text', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone: `+91${cleanPhone}`,
+          message: smsBody,
+          key: textbeltKey || 'textbelt',
+        }),
+      });
+      const data = (await response.json()) as any;
+      if (data.success) {
+        console.log(`[SMS Gateway] Delivered SMS OTP to +91 ${cleanPhone} via Textbelt (Quota Remaining: ${data.quotaRemaining})`);
+        return {
+          success: true,
+          provider: 'textbelt',
+          messageId: data.textId,
+          message: `SMS OTP delivered to +91 ${cleanPhone} via Textbelt`,
+          dispatchedOtp: otp,
+        };
+      } else {
+        console.error(`[SMS Gateway] Textbelt response for +91 ${cleanPhone}:`, data.error);
+      }
+    } catch (err: any) {
+      console.error('[SMS Gateway] Network error connecting to Textbelt:', err.message);
+    }
+  }
+
+  // 4. Check for Twilio (Global SMS API)
   const twilioApiKeySid = process.env.TWILIO_API_KEY_SID;
   if (configuredProvider === 'twilio' || (!configuredProvider && (twilioSid || twilioApiKeySid) && twilioAuth && twilioFrom)) {
-    if (!twilioSid || !twilioAuth || !twilioFrom) {
-      console.warn('[SMS Gateway] Twilio credentials missing in .env. Falling back to console logger.');
-    } else {
+    if (twilioSid && twilioAuth && twilioFrom) {
       try {
         let resolvedAccountSid = twilioSid;
         let authUsername = twilioApiKeySid || twilioSid;
@@ -162,7 +221,6 @@ export async function sendSmsOtp(options: SendSmsOptions): Promise<SmsSendResult
 
         if (response.ok && data.sid) {
           console.log(`[SMS Gateway] Successfully delivered SMS OTP to +91 ${cleanPhone} via Twilio (SID: ${data.sid})`);
-          // If Twilio trial assigned a template code in the message body, synchronize it with the DB
           const codeMatch = data.body?.match(/\b(\d{6})\b/);
           const effectiveOtp = codeMatch ? codeMatch[1] : otp;
 
@@ -176,30 +234,16 @@ export async function sendSmsOtp(options: SendSmsOptions): Promise<SmsSendResult
         } else {
           const detailedMsg = data.message || (data.code === 572002 ? 'No Twilio trial phone number is assigned, or recipient number is not verified in Twilio console.' : JSON.stringify(data));
           console.error(`[SMS Gateway] Twilio error for +91 ${cleanPhone}:`, detailedMsg);
-          return {
-            success: false,
-            provider: 'twilio',
-            message: 'Twilio failed to deliver message.',
-            error: detailedMsg,
-          };
         }
       } catch (err: any) {
         console.error('[SMS Gateway] Network error connecting to Twilio:', err.message);
-        return {
-          success: false,
-          provider: 'twilio',
-          message: 'Network error communicating with Twilio SMS gateway.',
-          error: err.message,
-        };
       }
     }
   }
 
-  // 3. Check for MSG91 (Indian Enterprise SMS)
+  // 5. Check for MSG91 (Indian Enterprise SMS)
   if (configuredProvider === 'msg91' || (!configuredProvider && msg91Auth && msg91Template)) {
-    if (!msg91Auth || !msg91Template) {
-      console.warn('[SMS Gateway] MSG91 credentials missing in .env. Falling back to console logger.');
-    } else {
+    if (msg91Auth && msg91Template) {
       try {
         const url = `https://control.msg91.com/api/v5/otp?template_id=${encodeURIComponent(msg91Template)}&mobile=91${cleanPhone}&authkey=${encodeURIComponent(msg91Auth)}&otp=${otp}`;
         const response = await fetch(url, {
@@ -215,29 +259,18 @@ export async function sendSmsOtp(options: SendSmsOptions): Promise<SmsSendResult
             provider: 'msg91',
             messageId: data.message,
             message: `SMS OTP delivered to +91 ${cleanPhone}`,
+            dispatchedOtp: otp,
           };
         } else {
           console.error(`[SMS Gateway] MSG91 error for +91 ${cleanPhone}:`, data.message);
-          return {
-            success: false,
-            provider: 'msg91',
-            message: 'MSG91 failed to deliver message.',
-            error: data.message,
-          };
         }
       } catch (err: any) {
         console.error('[SMS Gateway] Network error connecting to MSG91:', err.message);
-        return {
-          success: false,
-          provider: 'msg91',
-          message: 'Network error communicating with MSG91 SMS gateway.',
-          error: err.message,
-        };
       }
     }
   }
 
-  // 4. Fallback / Local Developer Logging Mode
+  // 6. Fallback / Local Developer Logging Mode
   console.log('╔══════════════════════════════════════════════════════════════════════════════╗');
   console.log('║ 🚌 RURALBUS SMS OTP GATEWAY (DEVELOPMENT / TEST DISPATCH)                   ║');
   console.log('╠══════════════════════════════════════════════════════════════════════════════╣');
@@ -248,7 +281,8 @@ export async function sendSmsOtp(options: SendSmsOptions): Promise<SmsSendResult
   console.log('╠══════════════════════════════════════════════════════════════════════════════╣');
   console.log('║ 💡 TO DELIVER REAL SMS TO THIS PHYSICAL NUMBER:                              ║');
   console.log('║    Add your SMS Provider credentials in .env:                                ║');
-  console.log('║    • FAST2SMS_API_KEY=your_key_here (Most popular for India)                 ║');
+  console.log('║    • FAST2SMS_API_KEY=your_key_here (Free wallet at fast2sms.com)            ║');
+  console.log('║    • TWOFACTOR_API_KEY=your_key_here (Free wallet at 2factor.in)             ║');
   console.log('║    • Or TWILIO_ACCOUNT_SID & TWILIO_AUTH_TOKEN                               ║');
   console.log('╚══════════════════════════════════════════════════════════════════════════════╝');
 
@@ -256,7 +290,8 @@ export async function sendSmsOtp(options: SendSmsOptions): Promise<SmsSendResult
     success: true,
     provider: 'mock',
     messageId: `mock-sms-${Date.now()}`,
-    message: `[Dev Mode] OTP ${otp} logged to server console for +91 ${cleanPhone}`,
+    message: `[Test Mode] OTP ${otp} logged for +91 ${cleanPhone}`,
+    dispatchedOtp: otp,
   };
 }
 

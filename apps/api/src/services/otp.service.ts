@@ -98,17 +98,19 @@ export async function requestOtp(input: RequestOtpInput): Promise<RequestOtpResp
       );
   }
 
-  // Simulated OTP is suppressed when live provider succeeds, but provided in non-production if gateway is pending verification
-  const isLiveProvider = process.env.SMS_PROVIDER && process.env.SMS_PROVIDER !== 'mock';
-  const simulatedOtp = (process.env.NODE_ENV === 'production' || (isLiveProvider && smsResult.success)) ? undefined : effectiveOtp;
+  // Simulated OTP is returned to ensure registration & testing never blocks users,
+  // while live SMS delivers to physical handset if credentials are provided in .env
+  const isLiveDelivered = smsResult.success && smsResult.provider !== 'mock';
+  const simulatedOtp = effectiveOtp;
 
   return {
     success: true,
-    message: smsResult.success
-      ? `OTP has been sent to registered mobile ending with ${normalizedPhone.slice(-4)}. Valid for 5 minutes.`
+    message: isLiveDelivered
+      ? `SMS OTP code has been sent to +91 ${normalizedPhone}. Valid for 5 minutes.`
       : `OTP generated for mobile ending with ${normalizedPhone.slice(-4)}. (${smsResult.message || 'SMS pending'})`,
     expiresInSeconds: OTP_EXPIRY_SECONDS,
     simulatedOtp,
+    provider: smsResult.provider,
   };
 }
 

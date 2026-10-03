@@ -194,7 +194,7 @@ export const authRoutes: FastifyPluginAsync = async (app: FastifyInstance) => {
     {
       config: {
         rateLimit: {
-          max: 5,
+          max: 10,
           timeWindow: '1 minute',
         },
       },
@@ -202,7 +202,11 @@ export const authRoutes: FastifyPluginAsync = async (app: FastifyInstance) => {
     async (request: FastifyRequest, reply: FastifyReply) => {
       const parsedBody = requestOtpSchema.parse(request.body);
       const result = await requestOtp(parsedBody);
-      return reply.status(200).send(result);
+      return reply.status(200).send({
+        success: true,
+        data: result,
+        ...result,
+      });
     }
   );
 
@@ -212,7 +216,7 @@ export const authRoutes: FastifyPluginAsync = async (app: FastifyInstance) => {
     {
       config: {
         rateLimit: {
-          max: 10,
+          max: 15,
           timeWindow: '1 minute',
         },
       },
@@ -220,7 +224,11 @@ export const authRoutes: FastifyPluginAsync = async (app: FastifyInstance) => {
     async (request: FastifyRequest, reply: FastifyReply) => {
       const parsedBody = verifyOtpSchema.parse(request.body);
       const result = await verifyOtp(parsedBody);
-      return reply.status(200).send(result);
+      return reply.status(200).send({
+        success: true,
+        data: result,
+        ...result,
+      });
     }
   );
 

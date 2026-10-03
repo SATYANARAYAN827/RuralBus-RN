@@ -281,18 +281,19 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   requestOtp: async (phone: string, purpose = 'REGISTRATION') => {
     set({ isLoading: true, error: null });
     try {
-      const res = await apiClient.post<{
-        simulatedOtp?: string;
-        expiresInSeconds?: number;
-      }>(API_CONFIG.ENDPOINTS.OTP_REQUEST, {
+      const res: any = await apiClient.post(API_CONFIG.ENDPOINTS.OTP_REQUEST, {
         phone: phone.trim(),
         purpose,
       });
 
+      const payload = res?.data || res;
+      const simulatedOtp = payload?.simulatedOtp || payload?.data?.simulatedOtp || (res as any)?.simulatedOtp;
+      const expiresInSeconds = payload?.expiresInSeconds || payload?.data?.expiresInSeconds || 300;
+
       set({ isLoading: false });
       return {
-        simulatedOtp: res.data?.simulatedOtp,
-        expiresInSeconds: res.data?.expiresInSeconds || 300,
+        simulatedOtp,
+        expiresInSeconds,
       };
     } catch (err: any) {
       // Security Enforcement:
