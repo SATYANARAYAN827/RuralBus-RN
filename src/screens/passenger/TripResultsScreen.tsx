@@ -23,7 +23,7 @@ export const TripResultsScreen: React.FC<TripResultsScreenProps> = ({
   onSelectTripToBook,
   onOpenLiveTrack,
 }) => {
-  const { colors, isLight } = useTheme();
+  const { colors, isLight, isAgro } = useTheme();
   const { isDesktop } = useResponsive();
   const {
     origin,
@@ -51,12 +51,12 @@ export const TripResultsScreen: React.FC<TripResultsScreenProps> = ({
         style={[
           styles.backButton,
           {
-            backgroundColor: isLight ? '#064e3b' : '#050a0f',
-            borderColor: '#047857',
+            backgroundColor: isAgro ? 'rgba(163, 230, 53, 0.12)' : isLight ? '#064e3b' : '#050a0f',
+            borderColor: isAgro ? 'rgba(163, 230, 53, 0.4)' : '#047857',
           },
         ]}
       >
-        <Text style={styles.backButtonText}>← Clear Search / Back to Search</Text>
+        <Text style={[styles.backButtonText, isAgro && { color: '#A3E635' }]}>← Clear Search / Back to Search</Text>
       </TouchableOpacity>
 
       {/* Header with Live Updates badge & timestamp */}

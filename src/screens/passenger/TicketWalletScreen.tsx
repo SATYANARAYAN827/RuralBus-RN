@@ -22,7 +22,7 @@ export const TicketWalletScreen: React.FC<TicketWalletScreenProps> = ({
   onOpenLiveTrack,
   onGoToSearch,
 }) => {
-  const { colors, isLight } = useTheme();
+  const { colors, isLight, isAgro } = useTheme();
   const { tickets, loadTickets, isLoadingTickets, selectTicket } = usePassengerStore();
   const [activeTab, setActiveTab] = useState<'ACTIVE' | 'HISTORY'>('ACTIVE');
 
@@ -58,15 +58,35 @@ export const TicketWalletScreen: React.FC<TicketWalletScreenProps> = ({
           style={[
             styles.tabBtn,
             {
-              backgroundColor: activeTab === 'ACTIVE' ? '#ecfdf5' : (isLight ? '#f8fafc' : '#1e293b'),
-              borderColor: activeTab === 'ACTIVE' ? '#00D488' : (isLight ? '#cbd5e1' : '#334155'),
+              backgroundColor:
+                activeTab === 'ACTIVE'
+                  ? isAgro
+                    ? 'rgba(163, 230, 53, 0.15)'
+                    : '#ecfdf5'
+                  : isLight
+                  ? '#f8fafc'
+                  : colors.card,
+              borderColor:
+                activeTab === 'ACTIVE'
+                  ? isAgro
+                    ? '#A3E635'
+                    : '#00D488'
+                  : colors.border,
             },
           ]}
         >
           <Text
             style={[
               styles.tabBtnText,
-              { color: activeTab === 'ACTIVE' ? '#047857' : colors.textSecondary },
+              {
+                color:
+                  activeTab === 'ACTIVE'
+                    ? isAgro
+                      ? '#A3E635'
+                      : '#047857'
+                    : colors.textSecondary,
+                fontWeight: activeTab === 'ACTIVE' ? '800' : '500',
+              },
             ]}
           >
             Active Passes ({activeTickets.length})
@@ -78,15 +98,35 @@ export const TicketWalletScreen: React.FC<TicketWalletScreenProps> = ({
           style={[
             styles.tabBtn,
             {
-              backgroundColor: activeTab === 'HISTORY' ? '#ecfdf5' : (isLight ? '#f8fafc' : '#1e293b'),
-              borderColor: activeTab === 'HISTORY' ? '#00D488' : (isLight ? '#cbd5e1' : '#334155'),
+              backgroundColor:
+                activeTab === 'HISTORY'
+                  ? isAgro
+                    ? 'rgba(163, 230, 53, 0.15)'
+                    : '#ecfdf5'
+                  : isLight
+                  ? '#f8fafc'
+                  : colors.card,
+              borderColor:
+                activeTab === 'HISTORY'
+                  ? isAgro
+                    ? '#A3E635'
+                    : '#00D488'
+                  : colors.border,
             },
           ]}
         >
           <Text
             style={[
               styles.tabBtnText,
-              { color: activeTab === 'HISTORY' ? '#047857' : colors.textSecondary },
+              {
+                color:
+                  activeTab === 'HISTORY'
+                    ? isAgro
+                      ? '#A3E635'
+                      : '#047857'
+                    : colors.textSecondary,
+                fontWeight: activeTab === 'HISTORY' ? '800' : '500',
+              },
             ]}
           >
             Completed Journeys ({historyTickets.length})
