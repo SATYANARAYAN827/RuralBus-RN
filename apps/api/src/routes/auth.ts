@@ -203,7 +203,6 @@ export const authRoutes: FastifyPluginAsync = async (app: FastifyInstance) => {
       const parsedBody = requestOtpSchema.parse(request.body);
       const result = await requestOtp(parsedBody);
       return reply.status(200).send({
-        success: true,
         data: result,
         ...result,
       });
@@ -225,7 +224,6 @@ export const authRoutes: FastifyPluginAsync = async (app: FastifyInstance) => {
       const parsedBody = verifyOtpSchema.parse(request.body);
       const result = await verifyOtp(parsedBody);
       return reply.status(200).send({
-        success: true,
         data: result,
         ...result,
       });

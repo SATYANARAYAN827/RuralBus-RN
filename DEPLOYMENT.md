@@ -1,4 +1,4 @@
-# 🚌 RuralBus Cloud Deployment & Architecture Documentation
+  # 🚌 RuralBus Cloud Deployment & Architecture Documentation
 
 ## 1. System Overview
 
@@ -106,28 +106,3 @@ To build a standalone installable `.apk` for Android phones:
    ```
 2. Download the generated `.apk` file directly to your Android device.
 3. The APK connects securely to `https://ruralbus-rn.onrender.com` over 4G/5G mobile data.
-
----
-
-## 8. Real SMS OTP Delivery Configuration (Fast2SMS / 2Factor / Twilio)
-
-The platform supports both **Real Telecom SMS Delivery** and **Instant Auto-Fill Testing**:
-
-### A. Free Instant Registration / Test Mode
-- When testing on `https://ruralbus.vercel.app`, the verification screen displays an interactive **`⚡ Test OTP: [ 123456 ] (Tap to Fill)`** badge so users can complete registration instantly with one click without waiting for SMS telecom carriers.
-
-### B. Delivering Real SMS to Physical Phones (`+91` Indian Mobile Numbers)
-To receive physical SMS text messages on your mobile SIM card:
-
-1. **Get Free Fast2SMS API Key**:
-   - Create a free account at [https://www.fast2sms.com](https://www.fast2sms.com).
-   - Go to **Dev API** in the sidebar.
-   - Copy your **API Authorization Key**.
-2. **Add to Render Environment**:
-   - Open your Render Dashboard at [https://dashboard.render.com](https://dashboard.render.com).
-   - Click on your **`RuralBus-RN`** Web Service → **Environment**.
-   - Add Environment Variable:
-     - **Key:** `FAST2SMS_API_KEY`
-     - **Value:** *(paste your Fast2SMS API key)*
-   - Click **Save Changes** (Render will redeploy with live SMS enabled automatically).
-

@@ -51,6 +51,7 @@ export interface RequestOtpResponse {
   message: string;
   expiresInSeconds: number;
   simulatedOtp?: string;
+  provider?: string;
 }
 
 export interface VerifyOtpResponse {
