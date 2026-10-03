@@ -22,31 +22,6 @@ export const PassengerHomeScreen: React.FC<PassengerHomeScreenProps> = ({
   onNavigateToTickets,
   onOpenLiveTrack,
 }) => {
-  const { isLight } = useTheme();
-  const { isDesktop, isMobile } = useResponsive();
-  const {
-    origin,
-    destination,
-    journeyDate,
-    setOrigin,
-    setDestination,
-    setJourneyDate,
-    swapOriginDestination,
-    searchBuses,
-    tickets,
-    setAllStopsOpen,
-    setBuyTicketModalOpen,
-    selectTrip,
-  } = usePassengerStore();
-
-  const [isLocationBannerDismissed, setIsLocationBannerDismissed] = useState(false);
-  const [gpsActive, setGpsActive] = useState(true);
-
-  const handleSearchPress = async () => {
-    await searchBuses();
-    onNavigateToFindBus();
-  };
-
   const { isLight, isAgro, colors } = useTheme();
   const { isDesktop, isMobile } = useResponsive();
   const {
