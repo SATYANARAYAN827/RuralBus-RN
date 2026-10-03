@@ -76,6 +76,17 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({
   const [localError, setLocalError] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
 
+  // Reset all form fields when component mounts or view changes
+  useEffect(() => {
+    setFullName('');
+    setPhone('');
+    setEmail('');
+    setPassword('');
+    setEnteredOtp('');
+    setGeneratedOtp('');
+    setLocalError('');
+  }, []);
+
   // 30-second countdown timer for registration OTP
   useEffect(() => {
     let interval: any = null;
@@ -106,12 +117,8 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({
       const res = await requestOtp(cleanPhone.slice(-10), 'REGISTRATION');
       const otpCode = res.simulatedOtp || '';
       setGeneratedOtp(otpCode);
-      // Auto-fill OTP in demo/test mode so user can verify with single tap
-      if (otpCode) {
-        setEnteredOtp(otpCode);
-      } else {
-        setEnteredOtp('');
-      }
+      // Keep OTP input completely blank so user can type or tap the fill button
+      setEnteredOtp('');
       setOtpTimer(res.expiresInSeconds ? Math.min(res.expiresInSeconds, 30) : 30);
       setStep('OTP');
     } catch (err: any) {
@@ -262,6 +269,10 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({
                           onChangeText={setFullName}
                           placeholder={t.reg.fullNamePlaceholder}
                           placeholderTextColor={isLight ? '#94a3b8' : '#64748b'}
+                          autoCorrect={false}
+                          spellCheck={false}
+                          autoComplete="off"
+                          textContentType="none"
                           style={[styles.textInput, { color: isLight ? '#0f172a' : '#ffffff' }]}
                         />
                         {fullName ? (
@@ -293,6 +304,10 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({
                           placeholder={t.reg.phonePlaceholder}
                           placeholderTextColor={isLight ? '#94a3b8' : '#64748b'}
                           keyboardType="phone-pad"
+                          autoCorrect={false}
+                          spellCheck={false}
+                          autoComplete="off"
+                          textContentType="none"
                           style={[styles.textInput, { color: isLight ? '#0f172a' : '#ffffff' }]}
                         />
                         {phone ? (
@@ -325,6 +340,10 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({
                           placeholderTextColor={isLight ? '#94a3b8' : '#64748b'}
                           keyboardType="email-address"
                           autoCapitalize="none"
+                          autoCorrect={false}
+                          spellCheck={false}
+                          autoComplete="off"
+                          textContentType="none"
                           style={[styles.textInput, { color: isLight ? '#0f172a' : '#ffffff' }]}
                         />
                         {email ? (
@@ -357,6 +376,10 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({
                           placeholderTextColor={isLight ? '#94a3b8' : '#64748b'}
                           secureTextEntry={!showPassword}
                           autoCapitalize="none"
+                          autoCorrect={false}
+                          spellCheck={false}
+                          autoComplete="new-password"
+                          textContentType="none"
                           style={[styles.textInput, { color: isLight ? '#0f172a' : '#ffffff' }]}
                         />
                         <TouchableOpacity
@@ -457,6 +480,10 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({
                           placeholderTextColor={isLight ? '#94a3b8' : '#64748b'}
                           keyboardType="number-pad"
                           maxLength={6}
+                          autoCorrect={false}
+                          spellCheck={false}
+                          autoComplete="one-time-code"
+                          textContentType="none"
                           style={[
                             styles.textInput,
                             {

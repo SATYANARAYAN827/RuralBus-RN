@@ -231,6 +231,10 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onSwitchToRegister }) 
                         placeholder={t.userIdPlaceholder}
                         placeholderTextColor={isLight ? '#94a3b8' : '#64748b'}
                         autoCapitalize="none"
+                        autoCorrect={false}
+                        spellCheck={false}
+                        autoComplete="off"
+                        textContentType="none"
                         style={[
                           styles.textInput,
                           { color: isLight ? '#0f172a' : '#ffffff' },
@@ -266,6 +270,10 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onSwitchToRegister }) 
                         placeholderTextColor={isLight ? '#94a3b8' : '#64748b'}
                         secureTextEntry={!showPassword}
                         autoCapitalize="none"
+                        autoCorrect={false}
+                        spellCheck={false}
+                        autoComplete="new-password"
+                        textContentType="none"
                         style={[
                           styles.textInput,
                           { color: isLight ? '#0f172a' : '#ffffff' },
