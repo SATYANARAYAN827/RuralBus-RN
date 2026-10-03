@@ -12,18 +12,18 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
-    "build": "pnpm build:packages && pnpm api:build",
+    "build": "tsc -p packages/shared-types && tsc -p packages/shared-validators && tsc -p packages/database && tsc -p apps/api",
     "build:web": "pnpm build:packages && expo export -p web",
-    "api:start": "pnpm --filter @ruralbus/api start",
+    "api:start": "node apps/api/dist/server.js",
     "api:dev": "pnpm --filter @ruralbus/api dev",
-    "api:build": "pnpm --filter @ruralbus/api build",
+    "api:build": "tsc -p apps/api",
     "api:test": "pnpm --filter @ruralbus/api test",
     "db:migrate": "pnpm --filter @ruralbus/database db:migrate",
     "db:seed": "pnpm --filter @ruralbus/database db:seed",
     "db:setup": "pnpm --filter @ruralbus/database setup:demo",
     "db:reset": "pnpm --filter @ruralbus/database db:reset",
     "db:studio": "pnpm --filter @ruralbus/database db:studio",
-    "build:packages": "pnpm --filter @ruralbus/shared-config --filter @ruralbus/shared-types --filter @ruralbus/shared-validators --filter @ruralbus/database build"
+    "build:packages": "tsc -p packages/shared-types && tsc -p packages/shared-validators && tsc -p packages/database"
   },
   "dependencies": {
     "@babel/runtime": "^8.0.5",
