@@ -98,7 +98,7 @@ async function resolveUserRoleAndTenant(userId: string, defaultRole: AppUserRole
       .limit(1);
 
     if (usr) {
-      const orConds = [];
+      const orConds: any[] = [];
       if (usr.phone) orConds.push(eq(schema.operators.contactPhone, usr.phone));
       if (usr.email) orConds.push(eq(schema.operators.contactEmail, usr.email));
       if (orConds.length > 0) {

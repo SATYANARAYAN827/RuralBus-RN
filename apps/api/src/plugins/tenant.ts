@@ -52,7 +52,7 @@ async function resolveTenantForUser(userId: string, role: string): Promise<strin
       .limit(1);
 
     if (usr) {
-      const orConds = [];
+      const orConds: any[] = [];
       if (usr.phone) orConds.push(eq(operators.contactPhone, usr.phone));
       if (usr.email) orConds.push(eq(operators.contactEmail, usr.email));
       if (orConds.length > 0) {

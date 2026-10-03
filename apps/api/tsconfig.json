@@ -1,5 +1,20 @@
 {
-  "extends": "@ruralbus/shared-config/tsconfig.node.json",
-  "compilerOptions": { "outDir": "./dist", "rootDir": "./src" },
+  "extends": "../../packages/shared-config/tsconfig.node.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "noImplicitAny": false,
+    "baseUrl": ".",
+    "paths": {
+      "@ruralbus/database": ["../../packages/database/dist/index.d.ts", "../../packages/database/src/index.ts"],
+      "@ruralbus/database/*": ["../../packages/database/dist/*", "../../packages/database/src/*"],
+      "@ruralbus/shared-types": ["../../packages/shared-types/dist/index.d.ts", "../../packages/shared-types/src/index.ts"],
+      "@ruralbus/shared-types/*": ["../../packages/shared-types/dist/*", "../../packages/shared-types/src/*"],
+      "@ruralbus/shared-validators": ["../../packages/shared-validators/dist/index.d.ts", "../../packages/shared-validators/src/index.ts"],
+      "@ruralbus/shared-validators/*": ["../../packages/shared-validators/dist/*", "../../packages/shared-validators/src/*"]
+    }
+  },
   "include": ["src/**/*"]
 }
+
+
