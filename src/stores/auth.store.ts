@@ -266,7 +266,35 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       });
 
       if (res.data?.user) {
-        set({ isLoading: false, error: null });
+        const user = res.data.user;
+        const tokens = res.data.tokens;
+
+        if (tokens?.accessToken) {
+          apiClient.setAuthToken(tokens.accessToken);
+          if (tokens.refreshToken) {
+            apiClient.setRefreshToken(tokens.refreshToken);
+          }
+          await authStorage.setTokens(tokens);
+
+          set({
+            user,
+            tokens,
+            isAuthenticated: true,
+            isLoading: false,
+            error: null,
+          });
+
+          // Sync into navigation store to automatically transition directly to the passenger portal
+          try {
+            useNavigationStore.getState().setActiveRole(user.role || 'PASSENGER', user);
+            useNavigationStore.getState().login(user.role || 'PASSENGER', user);
+            useNavigationStore.getState().setUser(user);
+          } catch {}
+          return;
+        }
+
+        // Fallback: If tokens were not attached directly, log in automatically with registered credentials
+        await get().login(input.phone.trim(), input.password);
         return;
       }
       throw new Error(res.message || 'Registration failed.');
