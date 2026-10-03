@@ -14,6 +14,9 @@ interface NavigationState {
   toggleMobileNav: () => void;
   setMobileNavOpen: (open: boolean) => void;
   setUser: (user: UserProfile | null) => void;
+  isLogoutModalOpen: boolean;
+  openLogoutModal: () => void;
+  closeLogoutModal: () => void;
   login: (role?: UserRole, customUser?: UserProfile | null) => void;
   logout: () => void;
 }
@@ -115,6 +118,16 @@ export const useNavigationStore = create<NavigationState>((set, get) => ({
     set({ isMobileNavOpen: open });
   },
 
+  isLogoutModalOpen: false,
+
+  openLogoutModal: () => {
+    set({ isLogoutModalOpen: true, isMobileNavOpen: false });
+  },
+
+  closeLogoutModal: () => {
+    set({ isLogoutModalOpen: false });
+  },
+
   login: (role: UserRole = 'PASSENGER', customUser?: UserProfile | null) => {
     set({
       isAuthenticated: true,
@@ -129,6 +142,7 @@ export const useNavigationStore = create<NavigationState>((set, get) => ({
       isAuthenticated: false,
       user: null,
       isMobileNavOpen: false,
+      isLogoutModalOpen: false,
     });
   },
 }));

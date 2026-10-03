@@ -13,7 +13,7 @@ import { EndTripConfirmModal } from './modals/EndTripConfirmModal';
 import { DriverSosModal } from './modals/DriverSosModal';
 
 export const DriverApp: React.FC = () => {
-  const { activeTab, setActiveTab, logout } = useNavigationStore();
+  const { activeTab, setActiveTab, openLogoutModal } = useNavigationStore();
   const authStore = useAuthStore();
   const {
     fetchDuty,
@@ -45,9 +45,7 @@ export const DriverApp: React.FC = () => {
   };
 
   const handleLogout = () => {
-    resetDutyState();
-    authStore.logout();
-    logout();
+    openLogoutModal();
   };
 
   return (

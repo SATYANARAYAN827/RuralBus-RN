@@ -7,3 +7,4 @@ export * from './LoadingIndicator';
 export * from './ErrorState';
 export * from './EmptyState';
 export * from './DropdownSelect';
+export * from './LogoutConfirmationModal';

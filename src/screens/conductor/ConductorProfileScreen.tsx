@@ -16,7 +16,7 @@ export const ConductorProfileScreen: React.FC = () => {
   const { colors, brandColors, isLight } = useTheme();
   const { isMobile } = useResponsive();
   const authStore = useAuthStore();
-  const { logout: navLogout } = useNavigationStore();
+  const { openLogoutModal } = useNavigationStore();
   const {
     activeTrip,
     stats,
@@ -36,9 +36,7 @@ export const ConductorProfileScreen: React.FC = () => {
   }, [fetchStats, fetchSettlement, activeTrip?.id]);
 
   const handleLogout = () => {
-    resetConductorState();
-    authStore.logout();
-    navLogout();
+    openLogoutModal();
   };
 
   return (

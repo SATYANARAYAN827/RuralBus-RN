@@ -12,13 +12,12 @@ export const SuperAdminProfileScreen: React.FC = () => {
   const { isMobile } = useResponsive();
   const { profile, isLoadingProfile, profileError, fetchProfile } = useSuperAdminStore();
   const authStore = useAuthStore();
-  const navStore = useNavigationStore();
+  const { openLogoutModal } = useNavigationStore();
 
   useEffect(() => { fetchProfile(); }, [fetchProfile]);
 
   const handleLogout = () => {
-    authStore.logout();
-    navStore.logout();
+    openLogoutModal();
   };
 
   if (isLoadingProfile && !profile) {

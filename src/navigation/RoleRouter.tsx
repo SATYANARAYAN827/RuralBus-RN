@@ -30,6 +30,7 @@ import {
   LoadingIndicator,
   ErrorState,
   EmptyState,
+  LogoutConfirmationModal,
 } from '../components/common';
 import { UserRole } from '../types';
 
@@ -43,10 +44,13 @@ export const RoleRouter: React.FC = () => {
     isAuthenticated,
     user: navUser,
     unreadNotifsCount,
+    isLogoutModalOpen,
     setActiveRole,
     setActiveTab,
     toggleMobileNav,
     setMobileNavOpen,
+    openLogoutModal,
+    closeLogoutModal,
     setUser,
     login,
     logout,
@@ -240,10 +244,7 @@ export const RoleRouter: React.FC = () => {
         onCloseMobileNav={() => setMobileNavOpen(false)}
         unreadNotifsCount={notificationStore.getUnreadCountForUser(activeRole, effectiveUser?.tenantId, effectiveUser?.phone || undefined)}
         onOpenNotifs={() => setIsNotifModalOpen(true)}
-        onLogout={() => {
-          authStore.logout();
-          logout();
-        }}
+        onLogout={openLogoutModal}
         extraHeaderActions={null}
       >
         {activeRole === 'PASSENGER' ? (
@@ -473,6 +474,12 @@ export const RoleRouter: React.FC = () => {
         userPhone={effectiveUser?.phone || undefined}
         onNavigateToRequests={() => setActiveTab('REQUESTS')}
         onNavigateToBuses={() => setActiveTab('BUSES')}
+      />
+
+      {/* Global Real-App Logout Confirmation Modal */}
+      <LogoutConfirmationModal
+        isOpen={isLogoutModalOpen}
+        onClose={closeLogoutModal}
       />
     </>
   );

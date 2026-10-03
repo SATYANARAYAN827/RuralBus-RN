@@ -27,7 +27,7 @@ export const OperatorProfileScreen: React.FC = () => {
   const { colors, isLight } = useTheme();
   const { isMobile } = useResponsive();
   const authStore = useAuthStore();
-  const { logout: navLogout } = useNavigationStore();
+  const { openLogoutModal } = useNavigationStore();
   const {
     profile,
     isLoadingProfile,
@@ -86,9 +86,7 @@ export const OperatorProfileScreen: React.FC = () => {
   };
 
   const handleLogout = () => {
-    resetAllState();
-    authStore.logout();
-    navLogout();
+    openLogoutModal();
   };
 
   return (

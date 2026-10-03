@@ -24,7 +24,7 @@ import { ConsentModal } from './modals/ConsentModal';
 import { BusService } from '../../types';
 
 export const PassengerApp: React.FC = () => {
-  const { activeTab, setActiveTab, logout } = useNavigationStore();
+  const { activeTab, setActiveTab, openLogoutModal } = useNavigationStore();
   const authStore = useAuthStore();
   const {
     isAllStopsOpen,
@@ -57,8 +57,7 @@ export const PassengerApp: React.FC = () => {
   const [activeTrackingTripId, setActiveTrackingTripId] = useState<string | null>(null);
 
   const handleLogout = () => {
-    authStore.logout();
-    logout();
+    openLogoutModal();
   };
 
   const handleOpenLiveTrack = (tripId: string) => {
