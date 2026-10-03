@@ -34,7 +34,7 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
   user,
   onLogout,
 }) => {
-  const { colors, isLight } = useTheme();
+  const { colors, isLight, isAgro } = useTheme();
   const authStore = useAuthStore();
   const effectiveUser = authStore.user || user;
 
@@ -45,7 +45,7 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
     : 0;
   const sidebarBg = isSuperAdmin ? '#050a0f' : colors.sidebarBackground;
   const sidebarBorder = isSuperAdmin ? 'rgba(255, 255, 255, 0.10)' : colors.sidebarBorder;
-  const isDarkShell = isSuperAdmin || !isLight;
+  const isDarkShell = isSuperAdmin || isAgro || !isLight;
 
   let lastGroup = '';
 
@@ -276,15 +276,23 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
             style={[
               styles.avatar,
               {
-                backgroundColor: isSuperAdmin ? '#4c1d95' : '#00593b',
-                borderColor: isSuperAdmin ? 'rgba(168, 85, 247, 0.4)' : 'rgba(0, 212, 136, 0.3)',
+                backgroundColor: isSuperAdmin
+                  ? '#4c1d95'
+                  : isAgro
+                  ? '#A3E635'
+                  : '#00593b',
+                borderColor: isSuperAdmin
+                  ? 'rgba(168, 85, 247, 0.4)'
+                  : isAgro
+                  ? '#A3E635'
+                  : 'rgba(0, 212, 136, 0.3)',
               },
             ]}
           >
             <Text
               style={[
                 styles.avatarText,
-                { color: isSuperAdmin ? '#d8b4fe' : '#00D488' },
+                { color: isSuperAdmin ? '#d8b4fe' : isAgro ? '#071007' : '#00D488' },
               ]}
             >
               {initials}
